@@ -108,10 +108,30 @@ def dashboard():
             cls.teams = Team.query.filter_by(class_id=cls.id).all()
         return render_template('professor_dashboard.html', user=user, classes=classes)
 
-    elif user.role == 'student':
-        # TEMPORARY: default to class_id = 1 (for testing)
-        questions = ReviewQuestion.query.filter_by(class_id=1).all()
-        return render_template('student_dashboard.html', user=user, questions=questions)
+elif user.role == 'student':
+    membership = TeamMembership.query.filter_by(user_id=user.id).first()
+    teammates = []
+    already_reviewed_ids = []
+
+    if membership:
+        team = Team.query.get(membership.team_id)
+        if team:
+            class_id = team.class_id
+            # All teammates except self
+            all_members = TeamMembership.query.filter_by(team_id=team.id).all()
+            teammates = [User.query.get(m.user_id) for m in all_members if m.user_id != user.id]
+
+            # Find who the student already reviewed
+            reviews_done = ReviewAnswer.query.filter_by(reviewer_id=user.id, class_id=class_id).all()
+            already_reviewed_ids = list(set([r.reviewee_id for r in reviews_done]))
+
+            questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
+        else:
+            questions = []
+    else:
+        questions = []
+
+    return render_template('student_dashboard.html', user=user, teammates=teammates, questions=questions, already_reviewed_ids=already_reviewed_ids)
 
 
 @app.route('/create_class_ui', methods=['POST'])
@@ -147,8 +167,16 @@ def assign_student_ui():
         flash("Student not found.", "danger")
         return redirect('/dashboard')
 
-    membership = TeamMembership(user_id=student.id, team_id=team_id)
-    db.session.add(membership)
+# Remove existing team memberships for this class
+existing = TeamMembership.query.filter_by(user_id=student.id).all()
+for m in existing:
+    existing_team = Team.query.get(m.team_id)
+    if existing_team and existing_team.class_id == Team.query.get(team_id).class_id:
+        db.session.delete(m)
+
+# Assign to new team
+membership = TeamMembership(user_id=student.id, team_id=team_id)
+db.session.add(membership)
     db.session.commit()
 
     # Get class ID from team
@@ -162,9 +190,9 @@ def submit_review_form():
     user = User.query.get(session.get('user_id'))
     if not user or user.role != 'student':
         return redirect('/login')
+reviewee_id = int(request.form['reviewee_id'])
+reviewee = User.query.get(reviewee_id)
 
-    reviewee_email = request.form['reviewee_email']
-    reviewee = User.query.filter_by(email=reviewee_email).first()
     if not reviewee:
         flash("Reviewee not found.", "danger")
         return redirect('/dashboard')
@@ -233,14 +261,6 @@ def class_dashboard(class_id):
     teams = Team.query.filter_by(class_id=class_id).all()
 
     # Get all students enrolled in any team for this class
-    all_students = User.query.filter_by(role='student').all()
-    enrolled_students = []
-    for student in all_students:
-        for membership in TeamMembership.query.filter_by(user_id=student.id).all():
-            team = Team.query.get(membership.team_id)
-            if team and team.class_id == class_id:
-                enrolled_students.append(student)
-                break
 
     # Build a dictionary: team_id -> list of students
     team_memberships = {}

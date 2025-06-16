@@ -1,8 +1,15 @@
 <form method="POST" action="/submit_review_form">
-  <div class="mb-3">
-    <label class="form-label">Reviewee Email</label>
-    <input type="email" name="reviewee_email" class="form-control" required>
-  </div>
+<div class="mb-3">
+  <label class="form-label">Select Teammate to Review</label>
+  <select class="form-select" name="reviewee_id" required>
+    {% for teammate in teammates %}
+      <option value="{{ teammate.id }}" {% if teammate.id in already_reviewed_ids %}disabled{% endif %}>
+        {{ teammate.first_name }} {{ teammate.last_name }}
+        {% if teammate.id in already_reviewed_ids %}(already rated){% endif %}
+      </option>
+    {% endfor %}
+  </select>
+</div>
 
   <!-- Dynamically loaded questions -->
   {% for question in questions %}

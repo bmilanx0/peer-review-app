@@ -108,10 +108,10 @@ def dashboard():
             cls.teams = Team.query.filter_by(class_id=cls.id).all()
         return render_template('professor_dashboard.html', user=user, classes=classes)
 
-elif user.role == 'student':
-    membership = TeamMembership.query.filter_by(user_id=user.id).first()
-    teammates = []
-    already_reviewed_ids = []
+    elif user.role == 'student':
+        membership = TeamMembership.query.filter_by(user_id=user.id).first()
+        teammates = []
+        already_reviewed_ids = []
 
     if membership:
         team = Team.query.get(membership.team_id)

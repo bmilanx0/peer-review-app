@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Add Review Questions{% endblock %}
+
+{% block content %}
+<h2>Add Review Questions for Class {{ class_id }}</h2>
+
+<form method="POST" class="mb-4">
+  <div class="mb-3">
+    <label class="form-label">Question</label>
+    <input type="text" name="question_text" class="form-control" required>
+  </div>
+  <button type="submit" class="btn btn-success">Add Question</button>
+</form>
+
+<h4>Current Questions</h4>
+<ul class="list-group">
+  {% for q in questions %}
+    <li class="list-group-item">{{ q.question_text }}</li>
+  {% endfor %}
+</ul>
+
+<a href="/class/{{ class_id }}" class="btn btn-secondary mt-4">Back to Class Dashboard</a>
+{% endblock %}
+

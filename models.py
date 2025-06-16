@@ -47,3 +47,8 @@ class ReviewAssignment(db.Model):
     comment = db.Column(db.Text)
 
 
+class ReviewQuestion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    class_id = db.Column(db.Integer, db.ForeignKey('class.id'))
+    question_text = db.Column(db.String(300), nullable=False)
+

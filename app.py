@@ -259,6 +259,29 @@ def class_dashboard(class_id):
     return render_template("class_dashboard.html", cls=cls, teams=teams, students=enrolled_students)
 
 
+@app.route('/add_question/<int:class_id>', methods=['GET', 'POST'])
+def add_question(class_id):
+    user = User.query.get(session.get('user_id'))
+    if not user or user.role != 'professor':
+        flash("Access denied.", "danger")
+        return redirect('/login')
+
+    if request.method == 'POST':
+        question_text = request.form['question_text'].strip()
+        if not question_text:
+            flash("Question text cannot be empty.", "danger")
+        else:
+            new_q = ReviewQuestion(class_id=class_id, question_text=question_text)
+            db.session.add(new_q)
+            db.session.commit()
+            flash("Question added successfully.", "success")
+
+        return redirect(f"/add_question/{class_id}")
+
+    questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
+    return render_template("add_question.html", class_id=class_id, questions=questions)
+
+
 # Final run setup for Render
 if __name__ == '__main__':
     with app.app_context():

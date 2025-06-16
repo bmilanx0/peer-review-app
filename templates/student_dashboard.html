@@ -1,0 +1,30 @@
+<!-- templates/student_dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<h2>Welcome, {{ user.name }}</h2>
+
+<h4>Assigned Peer Reviews</h4>
+<form method="POST" action="/submit_review_form">
+  <div class="mb-3">
+    <label>Reviewee Email</label>
+    <input type="email" name="reviewee_email" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>Score (1–10)</label>
+    <input type="number" name="score" min="1" max="10" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>Comment</label>
+    <textarea name="comment" class="form-control" rows="3" required></textarea>
+  </div>
+  <input type="hidden" name="class_id" value="1">
+  <input type="hidden" name="team_id" value="1">
+  <button type="submit" class="btn btn-success">Submit Review</button>
+</form>
+
+<a href="/logout" class="btn btn-link mt-3">Logout</a>
+{% endblock %}
+

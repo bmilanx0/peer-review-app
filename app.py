@@ -167,22 +167,23 @@ def assign_student_ui():
         flash("Student not found.", "danger")
         return redirect('/dashboard')
 
-# Remove existing team memberships for this class
-existing = TeamMembership.query.filter_by(user_id=student.id).all()
-for m in existing:
-    existing_team = Team.query.get(m.team_id)
-    if existing_team and existing_team.class_id == Team.query.get(team_id).class_id:
-        db.session.delete(m)
+    # Remove existing team memberships for this class
+    existing = TeamMembership.query.filter_by(user_id=student.id).all()
+    for m in existing:
+        existing_team = Team.query.get(m.team_id)
+        if existing_team and existing_team.class_id == Team.query.get(team_id).class_id:
+            db.session.delete(m)
 
-# Assign to new team
-membership = TeamMembership(user_id=student.id, team_id=team_id)
-db.session.add(membership)
-db.session.commit()
+    # Assign to new team
+    membership = TeamMembership(user_id=student.id, team_id=team_id)
+    db.session.add(membership)
+    db.session.commit()
 
     # Get class ID from team
-team = Team.query.get(team_id)
-flash(f"{student.first_name} assigned to Team {team.id}", "success")
-return redirect(f'/class/{team.class_id}')
+    team = Team.query.get(team_id)
+    flash(f"{student.first_name} assigned to Team {team.id}", "success")
+    return redirect(f'/class/{team.class_id}')
+
 
 
 @app.route('/submit_review_form', methods=['POST'])
@@ -190,19 +191,19 @@ def submit_review_form():
     user = User.query.get(session.get('user_id'))
     if not user or user.role != 'student':
         return redirect('/login')
-reviewee_id = int(request.form['reviewee_id'])
-reviewee = User.query.get(reviewee_id)
+    reviewee_id = int(request.form['reviewee_id'])
+    reviewee = User.query.get(reviewee_id)
 
-if not reviewee:
+    if not reviewee:
         flash("Reviewee not found.", "danger")
         return redirect('/dashboard')
 
-class_id = int(request.form['class_id'])
-team_id = int(request.form['team_id'])
+    class_id = int(request.form['class_id'])
+    team_id = int(request.form['team_id'])
 
-questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
+    questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
 
-for q in questions:
+    for q in questions:
         score = int(request.form.get(f"q_{q.id}", 0))
         answer = ReviewAnswer(
             reviewer_id=user.id,
@@ -214,9 +215,9 @@ for q in questions:
         )
         db.session.add(answer)
 
-db.session.commit()
-flash("Review submitted successfully.", "success")
-return redirect('/dashboard')
+    db.session.commit()
+    flash("Review submitted successfully.", "success")
+    return redirect('/dashboard')
 
 
 @app.route('/class_reviews/<int:class_id>')

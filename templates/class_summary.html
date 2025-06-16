@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Class Summary{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Class Peer Review Summary</h2>
+
+<h4>Average Scores</h4>
+<table class="table table-bordered table-striped">
+  <thead class="table-dark">
+    <tr>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Average Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in results %}
+    <tr>
+      <td>{{ r.student }}</td>
+      <td>{{ r.email }}</td>
+      <td>{{ r.average_score }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h4 class="mt-5">Peer Comments</h4>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>From</th>
+      <th>To</th>
+      <th>Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in comments %}
+    <tr>
+      <td>{{ c.reviewer_id }}</td>
+      <td>{{ c.reviewee_id }}</td>
+      <td>{{ c.comment }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<a href="/class/{{ comments[0].class_id if comments else results[0].class_id if results else 1 }}" class="btn btn-secondary mt-4">Back to Class Dashboard</a>
+{% endblock %}
+

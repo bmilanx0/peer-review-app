@@ -67,9 +67,7 @@
         </thead>
         <tbody>
           {% for team in teams %}
-            {% set members = TeamMembership.query.filter_by(team_id=team.id).all() %}
-            {% for member in members %}
-              {% set student = User.query.get(member.user_id) %}
+            {% for student in team_memberships[team.id] %}
               <tr>
                 <td>Team {{ team.id }}</td>
                 <td>{{ student.first_name }} {{ student.last_name }}</td>

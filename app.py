@@ -232,18 +232,29 @@ def class_dashboard(class_id):
     cls = Class.query.get_or_404(class_id)
     teams = Team.query.filter_by(class_id=class_id).all()
 
-    # Get students who selected this class at registration
+    # Get all students enrolled in any team for this class
     all_students = User.query.filter_by(role='student').all()
     enrolled_students = []
     for student in all_students:
-        # check if student is in any team in this class
         for membership in TeamMembership.query.filter_by(user_id=student.id).all():
             team = Team.query.get(membership.team_id)
             if team and team.class_id == class_id:
                 enrolled_students.append(student)
                 break
 
-    return render_template("class_dashboard.html", cls=cls, teams=teams, students=enrolled_students)
+    # Build a dictionary: team_id -> list of students
+    team_memberships = {}
+    for team in teams:
+        members = TeamMembership.query.filter_by(team_id=team.id).all()
+        team_memberships[team.id] = [User.query.get(m.user_id) for m in members]
+
+    return render_template(
+        "class_dashboard.html",
+        cls=cls,
+        teams=teams,
+        students=enrolled_students,
+        team_memberships=team_memberships
+    )
 
 
 @app.route('/add_question/<int:class_id>', methods=['GET', 'POST'])

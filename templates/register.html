@@ -1,0 +1,48 @@
+<!-- templates/register.html -->
+{% extends 'base.html' %}
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<h2>Register</h2>
+
+<form method="POST" action="/register">
+  <div class="mb-3">
+    <label>First Name</label>
+    <input type="text" name="first_name" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>Last Name</label>
+    <input type="text" name="last_name" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>Email</label>
+    <input type="email" name="email" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>Password</label>
+    <input type="password" name="password" class="form-control" minlength="8" required>
+  </div>
+  <div class="mb-3">
+    <label>Role</label>
+    <select name="role" class="form-select" required>
+      <option value="student">Student</option>
+      <option value="professor">Professor</option>
+    </select>
+  </div>
+
+  {% if classes %}
+  <div class="mb-3">
+    <label>Class (Students Only)</label>
+    <select name="class_id" class="form-select">
+      {% for cls in classes %}
+      <option value="{{ cls.id }}">{{ cls.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+
+  <button type="submit" class="btn btn-success">Register</button>
+  <a href="/login" class="btn btn-link">Back to Login</a>
+</form>
+{% endblock %}
+

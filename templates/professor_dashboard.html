@@ -1,0 +1,66 @@
+<!-- templates/professor_dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Professor Dashboard{% endblock %}
+
+{% block content %}
+<h2>Welcome, Professor {{ user.name }}</h2>
+
+<h4>Classes</h4>
+<ul class="list-group">
+  {% for cls in classes %}
+    <li class="list-group-item">
+      {{ cls.name }} —
+      <a href="/class_reviews/{{ cls.id }}" class="btn btn-sm btn-outline-primary">View Scores</a>
+    </li>
+  {% endfor %}
+</ul>
+
+<a href="/logout" class="btn btn-link mt-3">Logout</a>
+
+<hr>
+<h4>Create New Class</h4>
+<form method="POST" action="/create_class_ui" class="row g-3 mb-4">
+  <div class="col-auto">
+    <input type="text" name="class_name" class="form-control" placeholder="Class Name" required>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-success">Create Class</button>
+  </div>
+</form>
+
+{% endblock %}
+
+<h4>Create Team in a Class</h4>
+<form method="POST" action="/create_team_ui" class="row g-3 mb-4">
+  <div class="col-auto">
+    <select name="class_id" class="form-select" required>
+      {% for cls in classes %}
+      <option value="{{ cls.id }}">{{ cls.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary">Create Team</button>
+  </div>
+</form>
+
+<h4>Assign Student to Team</h4>
+<form method="POST" action="/assign_student_ui" class="row g-3">
+  <div class="col-auto">
+    <input type="email" name="student_email" class="form-control" placeholder="Student Email" required>
+  </div>
+  <div class="col-auto">
+    <select name="team_id" class="form-select" required>
+      {% for cls in classes %}
+        {% for team in cls.teams %}
+          <option value="{{ team.id }}">Team {{ team.id }} ({{ cls.name }})</option>
+        {% endfor %}
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-warning">Assign</button>
+  </div>
+</form>
+

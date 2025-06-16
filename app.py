@@ -180,9 +180,9 @@ db.session.add(membership)
 db.session.commit()
 
     # Get class ID from team
-    team = Team.query.get(team_id)
-    flash(f"{student.first_name} assigned to Team {team.id}", "success")
-    return redirect(f'/class/{team.class_id}')
+team = Team.query.get(team_id)
+flash(f"{student.first_name} assigned to Team {team.id}", "success")
+return redirect(f'/class/{team.class_id}')
 
 
 @app.route('/submit_review_form', methods=['POST'])
@@ -193,7 +193,7 @@ def submit_review_form():
 reviewee_id = int(request.form['reviewee_id'])
 reviewee = User.query.get(reviewee_id)
 
-    if not reviewee:
+     if not reviewee:
         flash("Reviewee not found.", "danger")
         return redirect('/dashboard')
 

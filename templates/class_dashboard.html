@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Class Dashboard{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">{{ cls.name }} Dashboard</h2>
+
+<!-- Section: Create a Team -->
+<div class="card mb-4">
+  <div class="card-header">Create a New Team</div>
+  <div class="card-body">
+    <form method="POST" action="/create_team_ui">
+      <input type="hidden" name="class_id" value="{{ cls.id }}">
+      <button type="submit" class="btn btn-primary">Create Team</button>
+    </form>
+  </div>
+</div>
+
+<!-- Section: Assign Students to Teams -->
+<div class="card mb-4">
+  <div class="card-header">Assign Student to Team</div>
+  <div class="card-body">
+    <form method="POST" action="/assign_student_ui">
+      <div class="row g-2">
+        <div class="col-md-6">
+          <label for="student_email" class="form-label">Student</label>
+          <select class="form-select" name="student_email" required>
+            {% for student in students %}
+              <option value="{{ student.email }}">{{ student.first_name }} {{ student.last_name }} ({{ student.email }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="team_id" class="form-label">Team</label>
+          <select class="form-select" name="team_id" required>
+            {% for team in teams %}
+              <option value="{{ team.id }}">Team {{ team.id }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-success mt-3">Assign to Team</button>
+    </form>
+  </div>
+</div>
+
+<!-- Section: Existing Teams Overview -->
+<div class="card">
+  <div class="card-header">Existing Teams in {{ cls.name }}</div>
+  <div class="card-body">
+    {% if teams %}
+      <ul class="list-group">
+        {% for team in teams %}
+          <li class="list-group-item">Team {{ team.id }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No teams created yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<a href="/dashboard" class="btn btn-secondary mt-4">Back to Dashboard</a>
+{% endblock %}
+

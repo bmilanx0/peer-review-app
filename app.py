@@ -132,14 +132,13 @@ def create_team_ui():
     new_team = Team(class_id=class_id)
     db.session.add(new_team)
     db.session.commit()
-    flash(f"New team created in class ID {class_id}.", "success")
-    return redirect('/dashboard')
+    flash("Team created successfully.", "success")
+    return redirect(f'/class/{class_id}')
 
 @app.route('/assign_student_ui', methods=['POST'])
 def assign_student_ui():
     email = request.form['student_email'].strip().lower()
     team_id = request.form['team_id']
-
     student = User.query.filter_by(email=email, role='student').first()
     if not student:
         flash("Student not found.", "danger")
@@ -148,8 +147,12 @@ def assign_student_ui():
     membership = TeamMembership(user_id=student.id, team_id=team_id)
     db.session.add(membership)
     db.session.commit()
-    flash(f"{student.first_name} assigned to team {team_id}.", "success")
-    return redirect('/dashboard')
+
+    # Get class ID from team
+    team = Team.query.get(team_id)
+    flash(f"{student.first_name} assigned to Team {team.id}", "success")
+    return redirect(f'/class/{team.class_id}')
+
 
 @app.route('/submit_review_form', methods=['POST'])
 def submit_review_form():
@@ -231,6 +234,30 @@ def get_class_reviews(class_id):
         })
 
     return jsonify(results)
+
+@app.route('/class/<int:class_id>')
+def class_dashboard(class_id):
+    user = User.query.get(session.get('user_id'))
+    if not user or user.role != 'professor':
+        flash("Access denied.", "danger")
+        return redirect('/login')
+
+    cls = Class.query.get_or_404(class_id)
+    teams = Team.query.filter_by(class_id=class_id).all()
+
+    # Get students who selected this class at registration
+    all_students = User.query.filter_by(role='student').all()
+    enrolled_students = []
+    for student in all_students:
+        # check if student is in any team in this class
+        for membership in TeamMembership.query.filter_by(user_id=student.id).all():
+            team = Team.query.get(membership.team_id)
+            if team and team.class_id == class_id:
+                enrolled_students.append(student)
+                break
+
+    return render_template("class_dashboard.html", cls=cls, teams=teams, students=enrolled_students)
+
 
 # Final run setup for Render
 if __name__ == '__main__':

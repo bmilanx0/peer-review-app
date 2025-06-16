@@ -222,31 +222,6 @@ def get_class_reviews(class_id):
     return render_template("class_scores.html", scores=results)
 
 
-@app.route('/class_reviews/<int:class_id>', methods=['GET'])
-def get_class_reviews(class_id):
-    reviews = ReviewAssignment.query.filter_by(class_id=class_id).all()
-    scores = {}
-    counts = {}
-
-    for r in reviews:
-        if r.reviewee_id not in scores:
-            scores[r.reviewee_id] = 0
-            counts[r.reviewee_id] = 0
-        scores[r.reviewee_id] += int(r.score)
-        counts[r.reviewee_id] += 1
-
-    results = []
-    for student_id, total_score in scores.items():
-        student = User.query.get(student_id)
-        avg_score = round(total_score / counts[student_id], 2)
-        results.append({
-            "student": student.first_name + " " + student.last_name,
-            "email": student.email,
-            "average_score": avg_score
-        })
-
-    return jsonify(results)
-
 @app.route('/class/<int:class_id>')
 def class_dashboard(class_id):
     user = User.query.get(session.get('user_id'))

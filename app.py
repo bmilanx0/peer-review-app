@@ -109,7 +109,10 @@ def dashboard():
         return render_template('professor_dashboard.html', user=user, classes=classes)
 
     elif user.role == 'student':
-        return render_template('student_dashboard.html', user=user)
+        # TEMPORARY: default to class_id = 1 (for testing)
+        questions = ReviewQuestion.query.filter_by(class_id=1).all()
+        return render_template('student_dashboard.html', user=user, questions=questions)
+
 
 @app.route('/create_class_ui', methods=['POST'])
 def create_class_ui():
@@ -160,24 +163,33 @@ def submit_review_form():
     if not user or user.role != 'student':
         return redirect('/login')
 
-    data = request.form
-    reviewee = User.query.filter_by(email=data['reviewee_email']).first()
+    reviewee_email = request.form['reviewee_email']
+    reviewee = User.query.filter_by(email=reviewee_email).first()
     if not reviewee:
         flash("Reviewee not found.", "danger")
         return redirect('/dashboard')
 
-    review = ReviewAssignment(
-        reviewer_id=user.id,
-        reviewee_id=reviewee.id,
-        class_id=data['class_id'],
-        team_id=data['team_id'],
-        score=data['score'],
-        comment=data['comment']
-    )
-    db.session.add(review)
+    class_id = int(request.form['class_id'])
+    team_id = int(request.form['team_id'])
+
+    questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
+
+    for q in questions:
+        score = int(request.form.get(f"q_{q.id}", 0))
+        answer = ReviewAnswer(
+            reviewer_id=user.id,
+            reviewee_id=reviewee.id,
+            class_id=class_id,
+            team_id=team_id,
+            question_id=q.id,
+            score=score
+        )
+        db.session.add(answer)
+
     db.session.commit()
     flash("Review submitted successfully.", "success")
     return redirect('/dashboard')
+
 
 @app.route('/class_reviews/<int:class_id>')
 def get_class_reviews(class_id):

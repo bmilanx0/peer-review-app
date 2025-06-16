@@ -52,3 +52,12 @@ class ReviewQuestion(db.Model):
     class_id = db.Column(db.Integer, db.ForeignKey('class.id'))
     question_text = db.Column(db.String(300), nullable=False)
 
+class ReviewAnswer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    reviewer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    reviewee_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    class_id = db.Column(db.Integer, db.ForeignKey('class.id'))
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'))
+    question_id = db.Column(db.Integer, db.ForeignKey('review_question.id'))
+    score = db.Column(db.Integer)
+

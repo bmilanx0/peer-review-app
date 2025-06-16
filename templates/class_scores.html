@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Class Review Scores{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2 class="mb-4">Class Review Scores</h2>
+
+  <table class="table table-striped table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>Student</th>
+        <th>Email</th>
+        <th>Average Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in scores %}
+      <tr>
+        <td>{{ row.student }}</td>
+        <td>{{ row.email }}</td>
+        <td>{{ row.average_score }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <a href="/dashboard" class="btn btn-secondary mt-3">Back to Dashboard</a>
+</div>
+{% endblock %}
+

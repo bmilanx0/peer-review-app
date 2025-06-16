@@ -176,20 +176,36 @@ def submit_review_form():
     flash("Review submitted successfully.", "success")
     return redirect('/dashboard')
 
-@app.route('/reviews/<int:team_id>', methods=['GET'])
-def get_reviews_for_team(team_id):
-    reviews = ReviewAssignment.query.filter_by(team_id=team_id).all()
-    results = []
+@app.route('/class_reviews/<int:class_id>')
+def get_class_reviews(class_id):
+    user = User.query.get(session.get('user_id'))
+    if not user or user.role != 'professor':
+        flash("Access denied.", "danger")
+        return redirect('/login')
+
+    reviews = ReviewAssignment.query.filter_by(class_id=class_id).all()
+    scores = {}
+    counts = {}
+
     for r in reviews:
-        reviewer = User.query.get(r.reviewer_id)
-        reviewee = User.query.get(r.reviewee_id)
+        if r.reviewee_id not in scores:
+            scores[r.reviewee_id] = 0
+            counts[r.reviewee_id] = 0
+        scores[r.reviewee_id] += int(r.score)
+        counts[r.reviewee_id] += 1
+
+    results = []
+    for student_id, total_score in scores.items():
+        student = User.query.get(student_id)
+        avg_score = round(total_score / counts[student_id], 2)
         results.append({
-            "from": reviewer.first_name + " " + reviewer.last_name,
-            "to": reviewee.first_name + " " + reviewee.last_name,
-            "score": r.score,
-            "comment": r.comment
+            "student": f"{student.first_name} {student.last_name}",
+            "email": student.email,
+            "average_score": avg_score
         })
-    return jsonify(results)
+
+    return render_template("class_scores.html", scores=results)
+
 
 @app.route('/class_reviews/<int:class_id>', methods=['GET'])
 def get_class_reviews(class_id):

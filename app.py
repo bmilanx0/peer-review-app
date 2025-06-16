@@ -268,6 +268,37 @@ def add_question(class_id):
     questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
     return render_template("add_question.html", class_id=class_id, questions=questions)
 
+@app.route('/class_summary/<int:class_id>')
+def class_summary(class_id):
+    user = User.query.get(session.get('user_id'))
+    if not user or user.role != 'professor':
+        flash("Access denied.", "danger")
+        return redirect('/login')
+
+    # Get scores from ReviewAnswer
+    answers = ReviewAnswer.query.filter_by(class_id=class_id).all()
+    students = {}
+
+    for ans in answers:
+        if ans.reviewee_id not in students:
+            students[ans.reviewee_id] = []
+        students[ans.reviewee_id].append(ans.score)
+
+    results = []
+    for student_id, scores in students.items():
+        student = User.query.get(student_id)
+        avg_score = round(sum(scores) / len(scores), 2)
+        results.append({
+            "student": f"{student.first_name} {student.last_name}",
+            "email": student.email,
+            "average_score": avg_score
+        })
+
+    # Get peer comments
+    comments = ReviewAssignment.query.filter_by(class_id=class_id).all()
+
+    return render_template("class_summary.html", results=results, comments=comments)
+
 
 # Final run setup for Render
 if __name__ == '__main__':

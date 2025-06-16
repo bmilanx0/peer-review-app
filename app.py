@@ -193,16 +193,16 @@ def submit_review_form():
 reviewee_id = int(request.form['reviewee_id'])
 reviewee = User.query.get(reviewee_id)
 
-     if not reviewee:
+if not reviewee:
         flash("Reviewee not found.", "danger")
         return redirect('/dashboard')
 
-    class_id = int(request.form['class_id'])
-    team_id = int(request.form['team_id'])
+class_id = int(request.form['class_id'])
+team_id = int(request.form['team_id'])
 
-    questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
+questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
 
-    for q in questions:
+for q in questions:
         score = int(request.form.get(f"q_{q.id}", 0))
         answer = ReviewAnswer(
             reviewer_id=user.id,
@@ -214,9 +214,9 @@ reviewee = User.query.get(reviewee_id)
         )
         db.session.add(answer)
 
-    db.session.commit()
-    flash("Review submitted successfully.", "success")
-    return redirect('/dashboard')
+db.session.commit()
+flash("Review submitted successfully.", "success")
+return redirect('/dashboard')
 
 
 @app.route('/class_reviews/<int:class_id>')

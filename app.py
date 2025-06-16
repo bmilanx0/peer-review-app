@@ -261,7 +261,8 @@ def class_dashboard(class_id):
     cls = Class.query.get_or_404(class_id)
     teams = Team.query.filter_by(class_id=class_id).all()
 
-    # Get all students enrolled in any team for this class
+    # Add this line to define enrolled_students
+    enrolled_students = User.query.filter_by(role='student').all()
 
     # Build a dictionary: team_id -> list of students
     team_memberships = {}

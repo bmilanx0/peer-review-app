@@ -177,7 +177,7 @@ for m in existing:
 # Assign to new team
 membership = TeamMembership(user_id=student.id, team_id=team_id)
 db.session.add(membership)
-    db.session.commit()
+db.session.commit()
 
     # Get class ID from team
     team = Team.query.get(team_id)

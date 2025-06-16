@@ -1,15 +1,32 @@
 # app.py
-from flask import Flask, request, jsonify, render_template, redirect, session, url_for
+from flask import Flask, request, jsonify, render_template, redirect, session, url_for, flash
 from flask_talisman import Talisman
 from config import Config
 from models import db, User, Class, Team, TeamMembership, ReviewAssignment
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = 'super-secret-key'
 db.init_app(app)
-Talisman(app)  # Enforce HTTPS + security headers
+
+# Add this CSP dictionary
+csp = {
+    'default-src': "'self'",
+    'style-src': [
+        "'self'",
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'
+    ],
+    'script-src': [
+        "'self'",
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'
+    ]
+}
+
+# Attach Flask-Talisman with custom CSP
+Talisman(app, content_security_policy=csp)
+
 
 @app.route('/')
 def index():
@@ -20,18 +37,20 @@ def register():
     classes = Class.query.all()
 
     if request.method == 'POST':
-        first = request.form['first_name']
-        last = request.form['last_name']
-        email = request.form['email']
+        first = request.form['first_name'].strip()
+        last = request.form['last_name'].strip()
+        email = request.form['email'].strip().lower()
         password = request.form['password']
         role = request.form['role']
         class_id = request.form.get('class_id')
 
-        if role not in ['student', 'professor']:
-            return "Invalid role", 400
+        if not all([first, last, email, password, role]):
+            flash("All fields are required.", "danger")
+            return render_template('register.html', classes=classes)
 
         if User.query.filter_by(email=email).first():
-            return "Email already registered", 400
+            flash("That email is already registered.", "warning")
+            return render_template('register.html', classes=classes)
 
         user = User(first_name=first, last_name=last, email=email, role=role)
         user.set_password(password)
@@ -44,6 +63,7 @@ def register():
                 db.session.add(TeamMembership(user_id=user.id, team_id=default_team.id))
                 db.session.commit()
 
+        flash("Account created successfully. You can now log in.", "success")
         return redirect('/login')
 
     return render_template('register.html', classes=classes)
@@ -52,28 +72,34 @@ def register():
 def login():
     if request.method == 'POST':
         try:
-            email = request.form['email']
+            email = request.form['email'].strip().lower()
             password = request.form['password']
         except KeyError:
-            return render_template('login.html', error="Missing form fields. Please try again.")
+            flash("Invalid form submission. Try again.", "danger")
+            return render_template('login.html')
 
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
             session['user_id'] = user.id
+            flash(f"Welcome back, {user.first_name}!", "success")
             return redirect('/dashboard')
-        return render_template('login.html', error="Invalid credentials. Please try again.")
-    
+
+        flash("Invalid credentials. Please try again.", "danger")
+        return render_template('login.html')
+
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
     session.clear()
+    flash("You have been logged out.", "info")
     return redirect('/login')
 
 @app.route('/dashboard')
 def dashboard():
     user = User.query.get(session.get('user_id'))
     if not user:
+        flash("Please log in to access your dashboard.", "warning")
         return redirect('/login')
 
     if user.role == 'professor':
@@ -81,7 +107,7 @@ def dashboard():
         for cls in classes:
             cls.teams = Team.query.filter_by(class_id=cls.id).all()
         return render_template('professor_dashboard.html', user=user, classes=classes)
-    
+
     elif user.role == 'student':
         return render_template('student_dashboard.html', user=user)
 
@@ -90,10 +116,14 @@ def create_class_ui():
     user = User.query.get(session.get('user_id'))
     if not user or user.role != 'professor':
         return redirect('/login')
-    name = request.form['class_name']
+    name = request.form['class_name'].strip()
+    if not name:
+        flash("Class name cannot be empty.", "danger")
+        return redirect('/dashboard')
     new_class = Class(name=name, professor_id=user.id)
     db.session.add(new_class)
     db.session.commit()
+    flash(f"Class '{name}' created.", "success")
     return redirect('/dashboard')
 
 @app.route('/create_team_ui', methods=['POST'])
@@ -102,20 +132,23 @@ def create_team_ui():
     new_team = Team(class_id=class_id)
     db.session.add(new_team)
     db.session.commit()
+    flash(f"New team created in class ID {class_id}.", "success")
     return redirect('/dashboard')
 
 @app.route('/assign_student_ui', methods=['POST'])
 def assign_student_ui():
-    email = request.form['student_email']
+    email = request.form['student_email'].strip().lower()
     team_id = request.form['team_id']
 
     student = User.query.filter_by(email=email, role='student').first()
     if not student:
-        return "Student not found", 404
+        flash("Student not found.", "danger")
+        return redirect('/dashboard')
 
     membership = TeamMembership(user_id=student.id, team_id=team_id)
     db.session.add(membership)
     db.session.commit()
+    flash(f"{student.first_name} assigned to team {team_id}.", "success")
     return redirect('/dashboard')
 
 @app.route('/submit_review_form', methods=['POST'])
@@ -127,7 +160,8 @@ def submit_review_form():
     data = request.form
     reviewee = User.query.filter_by(email=data['reviewee_email']).first()
     if not reviewee:
-        return "Reviewee not found", 404
+        flash("Reviewee not found.", "danger")
+        return redirect('/dashboard')
 
     review = ReviewAssignment(
         reviewer_id=user.id,
@@ -139,6 +173,7 @@ def submit_review_form():
     )
     db.session.add(review)
     db.session.commit()
+    flash("Review submitted successfully.", "success")
     return redirect('/dashboard')
 
 @app.route('/reviews/<int:team_id>', methods=['GET'])
@@ -181,8 +216,7 @@ def get_class_reviews(class_id):
 
     return jsonify(results)
 
-import os
-
+# Final run setup for Render
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

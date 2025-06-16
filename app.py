@@ -2,7 +2,7 @@
 from flask import Flask, request, jsonify, render_template, redirect, session, url_for, flash
 from flask_talisman import Talisman
 from config import Config
-from models import db, User, Class, Team, TeamMembership, ReviewAssignment
+from models import db, User, Class, Team, TeamMembership, ReviewAssignment, ReviewQuestion, ReviewAnswer
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 

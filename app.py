@@ -41,11 +41,16 @@ def register():
         last = request.form['last_name'].strip()
         email = request.form['email'].strip().lower()
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         role = request.form['role']
         class_id = request.form.get('class_id')
 
-        if not all([first, last, email, password, role]):
+        if not all([first, last, email, password, confirm_password, role]):
             flash("All fields are required.", "danger")
+            return render_template('register.html', classes=classes)
+
+        if password != confirm_password:
+            flash("Passwords do not match.", "danger")
             return render_template('register.html', classes=classes)
 
         if User.query.filter_by(email=email).first():
@@ -67,6 +72,7 @@ def register():
         return redirect('/login')
 
     return render_template('register.html', classes=classes)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -227,6 +233,24 @@ def submit_review_form():
     team_id = int(request.form['team_id'])
 
     questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
+    # Remove existing answers by this student for this reviewee in this class/team
+    existing_answers = ReviewAnswer.query.filter_by(
+        reviewer_id=user.id,
+        reviewee_id=reviewee.id,
+        class_id=class_id,
+        team_id=team_id
+    ).all()
+    for ea in existing_answers:
+        db.session.delete(ea)
+
+    # Remove existing comment for this reviewee by this reviewer
+    existing_comment = ReviewAssignment.query.filter_by(
+        reviewer_id=user.id,
+        reviewee_id=reviewee.id,
+        class_id=class_id
+    ).first()
+    if existing_comment:
+        db.session.delete(existing_comment)
 
     for q in questions:
         score = int(request.form.get(f"q_{q.id}", 0))
@@ -408,26 +432,27 @@ def review_detail(class_id, student_id):
         flash("Access denied.", "danger")
         return redirect('/login')
 
-    # Get all answers and comments made by this student in this class
+    # Get the student object for header
+    student = User.query.get_or_404(student_id)
+
+    # Get all scores given by the student in that class
     answers = ReviewAnswer.query.filter_by(class_id=class_id, reviewer_id=student_id).all()
-    assignments = ReviewAssignment.query.filter_by(class_id=class_id, reviewer_id=student_id).all()
-
-    # Load questions
     questions = {q.id: q.question_text for q in ReviewQuestion.query.filter_by(class_id=class_id).all()}
-
-    # Get users that were reviewed
     reviewees = {a.reviewee_id: User.query.get(a.reviewee_id) for a in answers}
 
-    # Get comments for each reviewee
+    # Get overall comment
+    assignments = ReviewAssignment.query.filter_by(class_id=class_id, reviewer_id=student_id).all()
     comments_map = {a.reviewee_id: a.comment for a in assignments}
 
     return render_template(
         "review_detail.html",
+        student=student,
         answers=answers,
         questions=questions,
         reviewees=reviewees,
         comments_map=comments_map
     )
+
 
 
 

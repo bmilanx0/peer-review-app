@@ -215,6 +215,18 @@ def submit_review_form():
         )
         db.session.add(answer)
 
+        student_comment = request.form.get('student_comment', '').strip()
+
+        if student_comment:
+            comment_entry = ReviewAssignment(
+            reviewer_id=user.id,
+            reviewee_id=reviewee.id,
+            class_id=class_id,
+            comment=student_comment
+    )
+    db.session.add(comment_entry)
+
+
     db.session.commit()
     flash("Review submitted successfully.", "success")
     return redirect('/dashboard')
@@ -301,6 +313,19 @@ def add_question(class_id):
     questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
     return render_template("add_question.html", class_id=class_id, questions=questions)
 
+@app.route('/delete_question/<int:question_id>/<int:class_id>', methods=['POST'])
+def delete_question(question_id, class_id):
+    user = User.query.get(session.get('user_id'))
+    if not user or user.role != 'professor':
+        flash("Access denied.", "danger")
+        return redirect('/login')
+
+    question = ReviewQuestion.query.get_or_404(question_id)
+    db.session.delete(question)
+    db.session.commit()
+    flash("Question deleted.", "info")
+    return redirect(f'/add_question/{class_id}')
+
 @app.route('/class_summary/<int:class_id>')
 def class_summary(class_id):
     user = User.query.get(session.get('user_id'))
@@ -331,6 +356,19 @@ def class_summary(class_id):
     comments = ReviewAssignment.query.filter_by(class_id=class_id).all()
 
     return render_template("class_summary.html", results=results, comments=comments)
+
+@app.route('/review_detail/<int:class_id>/<int:student_id>')
+def review_detail(class_id, student_id):
+    user = User.query.get(session.get('user_id'))
+    if not user or user.role != 'professor':
+        flash("Access denied.", "danger")
+        return redirect('/login')
+
+    answers = ReviewAnswer.query.filter_by(class_id=class_id, reviewee_id=student_id).all()
+    questions = {q.id: q.question_text for q in ReviewQuestion.query.filter_by(class_id=class_id).all()}
+    reviewers = {a.reviewer_id: User.query.get(a.reviewer_id) for a in answers}
+
+    return render_template("review_detail.html", answers=answers, questions=questions, reviewers=reviewers)
 
 
 # Final run setup for Render

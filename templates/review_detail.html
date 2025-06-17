@@ -1,0 +1,14 @@
+<h2>Review Details for Student</h2>
+<table border="1">
+  <tr><th>Question</th><th>Score</th><th>Comment</th><th>Reviewer</th></tr>
+  {% for a in answers %}
+  <tr>
+    <td>{{ questions[a.question_id] }}</td>
+    <td>{{ a.score }}</td>
+    <td>{{ a.comment or "—" }}</td>
+    <td>{{ reviewers[a.reviewer_id].first_name }} {{ reviewers[a.reviewer_id].last_name }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+

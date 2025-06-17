@@ -1,15 +1,15 @@
 <form method="POST" action="/submit_review_form">
-<div class="mb-3">
-  <label class="form-label">Select Teammate to Review</label>
-  <select class="form-select" name="reviewee_id" required>
-    {% for teammate in teammates %}
+  <div class="mb-3">
+    <label class="form-label">Select Teammate to Review</label>
+    <select class="form-select" name="reviewee_id" required>
+      {% for teammate in teammates %}
       <option value="{{ teammate.id }}" {% if teammate.id in already_reviewed_ids %}disabled{% endif %}>
         {{ teammate.first_name }} {{ teammate.last_name }}
         {% if teammate.id in already_reviewed_ids %}(already rated){% endif %}
       </option>
-    {% endfor %}
-  </select>
-</div>
+      {% endfor %}
+    </select>
+  </div>
 
   <!-- Dynamically loaded questions -->
   {% for question in questions %}
@@ -17,14 +17,19 @@
     <label class="form-label">{{ question.question_text }}</label>
     <select class="form-select" name="q_{{ question.id }}" required>
       {% for i in range(1, 11) %}
-        <option value="{{ i }}">{{ i }}</option>
+      <option value="{{ i }}">{{ i }}</option>
       {% endfor %}
     </select>
   </div>
   {% endfor %}
+
+  <label for="student_comment">Comment about this student:</label><br>
+  <textarea name="student_comment" rows="3" cols="50" required></textarea>
+
 
   <input type="hidden" name="class_id" value="1">
   <input type="hidden" name="team_id" value="1">
   <button type="submit" class="btn btn-primary">Submit Review</button>
 </form>
 
+<a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>

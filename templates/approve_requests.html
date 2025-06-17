@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Approve Join Requests</h2>
+<form method="POST">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Student Name</th>
+        <th>Class</th>
+        <th>Decision</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for request in requests %}
+      <tr>
+        <td>{{ request.student.first_name }} {{ request.student.last_name }}</td>
+        <td>{{ request.classroom.name }}</td>
+        <td>
+          <select name="{{ request.id }}" class="form-select">
+            <option value="approve">Approve</option>
+            <option value="deny">Deny</option>
+          </select>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <button class="btn btn-primary">Submit Decisions</button>
+</form>
+{% endblock %}

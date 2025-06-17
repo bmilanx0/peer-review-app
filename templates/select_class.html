@@ -1,13 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Select Class</h2>
+<h2>Select a Class</h2>
 <form method="POST">
-  <label for="class_id">Choose a class:</label>
-  <select name="class_id" class="form-select" required>
-    {% for c in classes %}
-    <option value="{{ c.id }}">{{ c.name }}</option>
+  <select name="class_id" class="form-select mb-3" required>
+    {% for cls in classes %}
+    <option value="{{ cls.id }}">{{ cls.name }}</option>
     {% endfor %}
   </select>
-  <button type="submit" class="btn btn-primary mt-3">Enter Class</button>
+  <button class="btn btn-primary">Continue</button>
 </form>
 {% endblock %}

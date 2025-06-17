@@ -1,63 +1,22 @@
 {% extends 'base.html' %}
-{% block title %}Register{% endblock %}
-
 {% block content %}
-<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-  <div class="card p-4 shadow-lg" style="width: 100%; max-width: 500px;">
-    <h2 class="text-center mb-4">Create an Account</h2>
-
-    <form method="POST" action="/register">
-      <div class="mb-3">
-        <label class="form-label">First Name</label>
-        <input type="text" name="first_name" class="form-control" required>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Last Name</label>
-        <input type="text" name="last_name" class="form-control" required>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input type="email" name="email" class="form-control" required>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" minlength="8" required>
-        <label for="confirm_password">Confirm Password</label>
-        <input type="password" name="confirm_password" class="form-control" required>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Role</label>
-        <select name="role" class="form-select" required>
-          <option value="">Select a role</option>
-          <option value="student">Student</option>
-          <option value="professor">Professor</option>
-        </select>
-      </div>
-
-      {% if classes %}
-      <div class="mb-3">
-        <label class="form-label">Class (Students Only)</label>
-        <select name="class_id" class="form-select">
-          <option value="">Choose a class</option>
-          {% for cls in classes %}
-          <option value="{{ cls.id }}">{{ cls.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      {% endif %}
-
-      <div class="d-grid">
-        <button type="submit" class="btn btn-success">Register</button>
-      </div>
-    </form>
-
-    <p class="mt-3 text-center">
-      Already have an account? <a href="/login">Log in here</a>
-    </p>
-  </div>
-</div>
+<h2>Register</h2>
+<form method="POST">
+  <input name="first_name" class="form-control mb-2" placeholder="First Name" required>
+  <input name="last_name" class="form-control mb-2" placeholder="Last Name" required>
+  <input name="email" class="form-control mb-2" type="email" placeholder="Email" required>
+  <input name="password" class="form-control mb-2" type="password" placeholder="Password" required>
+  <input name="confirm_password" class="form-control mb-2" type="password" placeholder="Confirm Password" required>
+  <select name="role" class="form-select mb-2">
+    <option value="student">Student</option>
+    <option value="professor">Professor</option>
+  </select>
+  <select name="class_id" class="form-select mb-2">
+    <option value="">(Optional) Join Class</option>
+    {% for cls in classes %}
+    <option value="{{ cls.id }}">{{ cls.name }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-success">Register</button>
+</form>
 {% endblock %}

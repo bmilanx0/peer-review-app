@@ -30,7 +30,7 @@ Talisman(app, content_security_policy=csp)
 
 @app.route('/')
 def index():
-    return redirect('/login')
+    return redirect('/register')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

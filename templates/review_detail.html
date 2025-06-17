@@ -1,23 +1,30 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% block title %}Review Details{% endblock %}
 {% block content %}
-
-<h2>{{ student.first_name }} {{ student.last_name }} rated the following:</h2>
-
-{% for reviewee_id, reviewee in reviewees.items() %}
-<h4>{{ reviewee.first_name }} {{ reviewee.last_name }}</h4>
-<ul>
-  {% for a in answers if a.reviewee_id == reviewee_id %}
-  <li>
-    <strong>{{ questions[a.question_id] }}:</strong> {{ a.score }}
-  </li>
-  {% endfor %}
-  <li>
-    <strong>Overall Comment:</strong> {{ comments_map.get(reviewee_id, "—") }}
-  </li>
-</ul>
-{% endfor %}
-
-<a href="{{ url_for('class_summary', class_id=request.view_args['class_id']) }}" class="btn btn-secondary mt-4">Back to
-  Summary</a>
-
+<div class="container">
+  <div class="card mx-auto" style="max-width: 700px;">
+    <div class="card-header">
+      <h4>{{ student.first_name }} {{ student.last_name }}'s Peer Feedback</h4>
+    </div>
+    <div class="card-body">
+      {% for reviewee_id, answer_list in reviewees.items() %}
+      <h5 class="mt-3 text-primary">{{ answer_list[0].reviewee_name }}</h5>
+      <ul class="list-group mb-3">
+        {% for answer in answer_list %}
+        <li class="list-group-item d-flex justify-content-between">
+          {{ questions[answer.question_id] }}
+          <span class="badge bg-secondary">{{ answer.score }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if comments_map[reviewee_id] %}
+      <div class="mb-3">
+        <strong>Comment:</strong>
+        <p>{{ comments_map[reviewee_id] }}</p>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
 {% endblock %}

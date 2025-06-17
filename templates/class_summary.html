@@ -1,44 +1,29 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% block title %}Class Summary{% endblock %}
 {% block content %}
+<div class="container">
+  <h3 class="text-center my-4">Class Summary</h3>
 
-<h2>Class Review Summary</h2>
-
-<!-- Average Scores Table -->
-<h4>Average Scores</h4>
-<table class="table table-bordered table-striped table-dark">
-  <thead>
-    <tr>
-      <th>Student</th>
-      <th>Email</th>
-      <th>Average Score</th>
-      <th>Team</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for r in results %}
-    <tr>
-      <td>{{ r.student }}</td>
-      <td>{{ r.email }}</td>
-      <td>{{ r.average_score }}</td>
-      <td>{{ r.team }}</td>
-    </tr>
+  <div class="row">
+    {% for team_id, team_results in results_by_team.items() %}
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <strong>Team {{ team_id }}</strong>
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for r in team_results %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ r.student }}
+            <span class="badge bg-primary rounded-pill">{{ r.average_score }}</span>
+            <a href="{{ url_for('review_detail', student_id=r.student_id, class_id=class_id) }}"
+              class="btn btn-sm btn-outline-info ms-2">Details</a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
     {% endfor %}
-  </tbody>
-</table>
-
-<!-- Peer Comments Navigation -->
-<h4 class="mt-5">Peer Comments & Reviews</h4>
-<p>Select a student to view what they wrote about others:</p>
-<ul>
-  {% for r in results %}
-  <li>
-    <a href="{{ url_for('review_detail', class_id=class_id, student_id=r.id) }}">
-      {{ r.student }}
-    </a>
-  </li>
-  {% endfor %}
-</ul>
-
-<a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-4">Back to Dashboard</a>
-
+  </div>
+</div>
 {% endblock %}

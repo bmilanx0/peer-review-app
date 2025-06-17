@@ -1,12 +1,22 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% block title %}Choose a Class{% endblock %}
 {% block content %}
-<h2>Select a Class</h2>
-<form method="POST">
-  <select name="class_id" class="form-select mb-3" required>
-    {% for cls in classes %}
-    <option value="{{ cls.id }}">{{ cls.name }}</option>
-    {% endfor %}
-  </select>
-  <button class="btn btn-primary">Continue</button>
-</form>
+<div class="container-centered">
+  <div class="card">
+    <h4 class="text-center mb-4">Select a Class to Enter</h4>
+    <form method="POST">
+      <div class="mb-3">
+        <label for="class_id" class="form-label">Class</label>
+        <select name="class_id" class="form-select" required>
+          {% for cls in classes %}
+          <option value="{{ cls.id }}">{{ cls.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-success">Enter Class</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

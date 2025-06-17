@@ -1,22 +1,51 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
 {% block content %}
-<h2>Register</h2>
-<form method="POST">
-  <input name="first_name" class="form-control mb-2" placeholder="First Name" required>
-  <input name="last_name" class="form-control mb-2" placeholder="Last Name" required>
-  <input name="email" class="form-control mb-2" type="email" placeholder="Email" required>
-  <input name="password" class="form-control mb-2" type="password" placeholder="Password" required>
-  <input name="confirm_password" class="form-control mb-2" type="password" placeholder="Confirm Password" required>
-  <select name="role" class="form-select mb-2">
-    <option value="student">Student</option>
-    <option value="professor">Professor</option>
-  </select>
-  <select name="class_id" class="form-select mb-2">
-    <option value="">(Optional) Join Class</option>
-    {% for cls in classes %}
-    <option value="{{ cls.id }}">{{ cls.name }}</option>
-    {% endfor %}
-  </select>
-  <button class="btn btn-success">Register</button>
-</form>
+<div class="container-centered">
+  <div class="card">
+    <h3 class="text-center mb-4">Register</h3>
+    <form method="POST">
+      <div class="mb-3">
+        <label>First Name</label>
+        <input name="first_name" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label>Last Name</label>
+        <input name="last_name" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label>Email</label>
+        <input name="email" type="email" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label>Password</label>
+        <input name="password" type="password" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label>Confirm Password</label>
+        <input name="confirm_password" type="password" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label>Role</label>
+        <select name="role" class="form-select" required>
+          <option value="">Select Role</option>
+          <option value="student">Student</option>
+          <option value="professor">Professor</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label>Join a Class (optional)</label>
+        <select name="class_id" class="form-select">
+          <option value="">Select Class</option>
+          {% for cls in classes %}
+          <option value="{{ cls.id }}">{{ cls.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-success">Register</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

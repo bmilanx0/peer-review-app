@@ -1,56 +1,56 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
 {% block content %}
+<div class="container">
+  <div class="card mx-auto" style="max-width: 700px;">
+    <h4 class="text-center my-3">Welcome, {{ user.first_name }}!</h4>
 
-<h2>Welcome, {{ user.first_name }}!</h2>
+    {% if teammates %}
+    <form method="POST" action="/submit_review_form"
+      onsubmit="return confirm('Are you sure you want to submit this review? It will overwrite any previous one.')">
+      <input type="hidden" name="class_id" value="{{ class_id }}">
+      <input type="hidden" name="team_id" value="{{ team_id }}">
 
-{% if teammates %}
-<form method="POST" action="/submit_review_form" onsubmit="return confirmResubmission()">
-  <div class="mb-3">
-    <label class="form-label">Select Teammate to Review</label>
-    <select class="form-select" name="reviewee_id" required>
-      {% for teammate in teammates %}
-      <option value="{{ teammate.id }}" {% if teammate.id in already_reviewed_ids %}data-reviewed="true" {% endif %}>
-        {{ teammate.first_name }} {{ teammate.last_name }}
-        {% if teammate.id in already_reviewed_ids %}(already rated){% endif %}
-      </option>
+      <div class="mb-3">
+        <label>Select Teammate to Review</label>
+        <select class="form-select" name="reviewee_id" required>
+          {% for teammate in teammates %}
+          <option value="{{ teammate.id }}" {% if teammate.id in already_reviewed_ids %}disabled{% endif %}>
+            {{ teammate.first_name }} {{ teammate.last_name }}
+            {% if teammate.id in already_reviewed_ids %}(already rated){% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {% for question in questions %}
+      <div class="mb-3">
+        <label>{{ question.question_text }}</label>
+        <select class="form-select" name="q_{{ question.id }}" required>
+          {% for i in range(1, 11) %}
+          <option value="{{ i }}">{{ i }}</option>
+          {% endfor %}
+        </select>
+      </div>
       {% endfor %}
-    </select>
+
+      <div class="mb-3">
+        <label>Comment about this student</label>
+        <textarea name="student_comment" class="form-control" rows="3" required></textarea>
+      </div>
+
+      <div class="d-grid">
+        <button class="btn btn-primary">Submit Review</button>
+      </div>
+    </form>
+    {% else %}
+    <p class="text-center text-muted">You are not assigned to a team in this class yet.</p>
+    {% endif %}
+
+    <div class="text-center mt-3">
+      <a href="/join_class" class="btn btn-outline-secondary btn-sm">Join Another Class</a>
+      <a href="/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+    </div>
   </div>
-
-  {% for question in questions %}
-  <div class="mb-3">
-    <label class="form-label">{{ question.question_text }}</label>
-    <select class="form-select" name="q_{{ question.id }}" required>
-      {% for i in range(1, 11) %}
-      <option value="{{ i }}">{{ i }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  {% endfor %}
-
-  <div class="mb-3">
-    <label for="student_comment">Comment about this student:</label><br>
-    <textarea name="student_comment" rows="3" cols="50" required></textarea>
-  </div>
-
-  <input type="hidden" name="class_id" value="{{ class_id }}">
-  <input type="hidden" name="team_id" value="{{ team_id }}">
-  <button type="submit" class="btn btn-primary">Submit Review</button>
-</form>
-{% else %}
-<p>You are not assigned to any team in this class.</p>
-{% endif %}
-
-<a href="{{ url_for('logout') }}" class="btn btn-outline-danger mt-4">Logout</a>
-
-<script>
-  function confirmResubmission() {
-    const selected = document.querySelector('select[name="reviewee_id"] option:checked');
-    if (selected.dataset.reviewed === "true") {
-      return confirm("You've already rated this student. Are you sure you want to rate them again?");
-    }
-    return true;
-  }
-</script>
-
+</div>
 {% endblock %}

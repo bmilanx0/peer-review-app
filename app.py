@@ -216,6 +216,30 @@ def choose_class():
     session['class_id'] = request.form['class_id']
     return redirect('/dashboard')
 
+@app.route('/join_class', methods=['GET', 'POST'])
+def join_class():
+    user = User.query.get(session.get('user_id'))
+    if not user or user.role != 'student':
+        return redirect('/login')
+
+    classes = Class.query.all()
+    if request.method == 'POST':
+        class_id = int(request.form['class_id'])
+
+        # Check if already requested
+        existing = JoinRequest.query.filter_by(student_id=user.id, class_id=class_id).first()
+        if existing:
+            flash("You already submitted a request for this class.", "info")
+            return redirect('/dashboard')
+
+        req = JoinRequest(student_id=user.id, class_id=class_id, status='pending')
+        db.session.add(req)
+        db.session.commit()
+        flash("Join request submitted.", "success")
+        return redirect('/dashboard')
+
+    return render_template('join_class.html', classes=classes)
+
 
 @app.route('/create_class_ui', methods=['POST'])
 def create_class_ui():
@@ -266,8 +290,6 @@ def assign_student_ui():
     team = Team.query.get(team_id)
     flash(f"{student.first_name} assigned to Team {team.id}", "success")
     return redirect(f'/class/{team.class_id}')
-
-
 
 
 @app.route('/submit_review_form', methods=['POST'])
@@ -335,7 +357,6 @@ def submit_review_form():
     return redirect('/dashboard')
 
 
-
 @app.route('/class_reviews/<int:class_id>')
 def get_class_reviews(class_id):
     user = User.query.get(session.get('user_id'))
@@ -377,10 +398,17 @@ def class_dashboard(class_id):
     cls = Class.query.get_or_404(class_id)
     teams = Team.query.filter_by(class_id=class_id).all()
 
-    # Add this line to define enrolled_students
-    enrolled_students = User.query.filter_by(role='student').all()
+    # ✅ Show only students in teams for this class
+    enrolled_students = (
+        db.session.query(User)
+        .join(TeamMembership, User.id == TeamMembership.user_id)
+        .join(Team, TeamMembership.team_id == Team.id)
+        .filter(Team.class_id == class_id)
+        .distinct()
+        .all()
+    )
 
-    # Build a dictionary: team_id -> list of students
+    # Organize students by team
     team_memberships = {}
     for team in teams:
         members = TeamMembership.query.filter_by(team_id=team.id).all()

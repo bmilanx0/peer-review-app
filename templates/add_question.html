@@ -1,31 +1,33 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block title %}Add Review Questions{% endblock %}
-
 {% block content %}
-<h2>Add Review Questions for Class {{ class_id }}</h2>
-
-<form method="POST" class="mb-4">
-  <div class="mb-3">
-    <label class="form-label">Question</label>
-    <input type="text" name="question_text" class="form-control" required>
-  </div>
-  <button type="submit" class="btn btn-success">Add Question</button>
-</form>
-
-<h4>Current Questions</h4>
-<ul class="list-group">
-  {% for q in questions %}
-  <div style="margin-bottom: 10px;">
-    {{ q.question_text }}
-    <form method="POST" action="{{ url_for('delete_question', question_id=q.id, class_id=class_id) }}"
-      style="display:inline;">
-      <button type="submit" onclick="return confirm('Delete this question?')">🗑️</button>
+<div class="container-centered">
+  <div class="card">
+    <h4 class="text-center mb-4">Add Questions for Review</h4>
+    <form method="POST">
+      <div class="mb-3">
+        <label class="form-label">Question</label>
+        <input name="question_text" class="form-control" placeholder="e.g., How well did the teammate communicate?"
+          required>
+      </div>
+      <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-primary">Add Question</button>
+      </div>
     </form>
+
+    <hr>
+    <h6>Current Questions:</h6>
+    <ul class="list-group">
+      {% for q in questions %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ q.question_text }}
+        <form method="POST" action="/delete_question/{{ q.id }}" style="display:inline;">
+          <input type="hidden" name="class_id" value="{{ class_id }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
   </div>
-  {% endfor %}
-
-</ul>
-
-
-<a href="/class/{{ class_id }}" class="btn btn-secondary mt-4">Back to Class Dashboard</a>
+</div>
 {% endblock %}

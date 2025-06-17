@@ -1,62 +1,41 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block title %}Professor Dashboard{% endblock %}
-
 {% block content %}
 <div class="container">
-  <h2 class="mb-4">Welcome, Professor</h2>
+  <h3 class="text-center my-4">Welcome, Professor {{ user.first_name }}</h3>
 
-  <!-- Class List -->
-  <h4 class="mb-3">Your Classes</h4>
-
-  {% if classes %}
-  <div class="list-group mb-4">
-    {% for cls in classes %}
-    <div class="list-group-item d-flex justify-content-between align-items-center">
-      <strong>{{ cls.name }}</strong>
-      <div>
-        <a href="/class/{{ cls.id }}" class="btn btn-outline-secondary btn-sm me-2">Manage Class</a>
-        <a href="/class_summary/{{ cls.id }}" class="btn btn-primary btn-sm">View Summary</a>
-      </div>
+  <form action="/create_class_ui" method="POST" class="row g-3 mb-4">
+    <div class="col-auto">
+      <input type="text" name="class_name" class="form-control" placeholder="New Class Name" required>
     </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p class="text-muted">No classes created yet.</p>
-  {% endif %}
-
-  <!-- Create New Class -->
-  <hr>
-  <h4 class="mt-4 mb-3">Create New Class</h4>
-  <form method="POST" action="/create_class_ui" class="row g-2">
-    <div class="col-md-6">
-      <input type="text" class="form-control" name="class_name" placeholder="Class Name" required>
-    </div>
-    <div class="col-md-6">
-      <button type="submit" class="btn btn-success w-100">Create Class</button>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-success">Create Class</button>
     </div>
   </form>
 
-  <!-- Logout -->
-  <div class="mt-5">
-    <a href="/logout" class="btn btn-link">Logout</a>
+  {% for cls in classes %}
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <strong>{{ cls.name }}</strong>
+      <div>
+        <a href="/class/{{ cls.id }}" class="btn btn-outline-secondary btn-sm">Manage Class</a>
+        <a href="/add_question/{{ cls.id }}" class="btn btn-outline-info btn-sm">Add Questions</a>
+        <a href="/class_summary/{{ cls.id }}" class="btn btn-outline-primary btn-sm">View Summary</a>
+      </div>
+    </div>
+    <div class="card-body">
+      {% if cls.teams %}
+      <h6>Teams:</h6>
+      <ul>
+        {% for team in cls.teams %}
+        <li>Team {{ team.id }}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>No teams created yet.</p>
+      {% endif %}
+    </div>
   </div>
+  {% endfor %}
 </div>
 {% endblock %}
-
-<h4>Pending Join Requests</h4>
-{% for cls in classes %}
-<h5>{{ cls.name }}</h5>
-<ul>
-  {% for req in cls.join_requests %}
-  <li>
-    {{ req.student.first_name }} {{ req.student.last_name }} -
-    <form method="POST" action="{{ url_for('approve_join', request_id=req.id) }}" style="display:inline;">
-      <button class="btn btn-success btn-sm">Approve</button>
-    </form>
-    <form method="POST" action="{{ url_for('reject_join', request_id=req.id) }}" style="display:inline;">
-      <button class="btn btn-danger btn-sm">Reject</button>
-    </form>
-  </li>
-  {% endfor %}
-</ul>
-{% endfor %}

@@ -1,12 +1,22 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% block title %}Join Class{% endblock %}
 {% block content %}
-<h2>Join a New Class</h2>
-<form method="POST">
-  <select name="class_id" class="form-select mb-3" required>
-    {% for cls in classes %}
-    <option value="{{ cls.id }}">{{ cls.name }}</option>
-    {% endfor %}
-  </select>
-  <button class="btn btn-success">Send Join Request</button>
-</form>
+<div class="container-centered">
+  <div class="card">
+    <h4 class="text-center mb-4">Request to Join a Class</h4>
+    <form method="POST">
+      <div class="mb-3">
+        <label for="class_id" class="form-label">Select Class</label>
+        <select name="class_id" class="form-select" required>
+          {% for cls in classes %}
+          <option value="{{ cls.id }}">{{ cls.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Submit Request</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

@@ -510,17 +510,32 @@ def review_detail(class_id, student_id):
         flash("Access denied.", "danger")
         return redirect('/login')
 
-    # Get the student object for header
+    # Get the student (reviewer)
     student = User.query.get_or_404(student_id)
 
-    # Get all scores given by the student in that class
+    # Get all answers the student gave in this class
     answers = ReviewAnswer.query.filter_by(class_id=class_id, reviewer_id=student_id).all()
-    questions = {q.id: q.question_text for q in ReviewQuestion.query.filter_by(class_id=class_id).all()}
-    reviewees = {a.reviewee_id: User.query.get(a.reviewee_id) for a in answers}
 
-    # Get overall comment
-    assignments = ReviewAssignment.query.filter_by(class_id=class_id, reviewer_id=student_id).all()
-    comments_map = {a.reviewee_id: a.comment for a in assignments}
+    # Get all related questions for this class
+    questions = {
+        q.id: q.question_text for q in ReviewQuestion.query.filter_by(class_id=class_id).all()
+    }
+
+    # Gather all reviewees (the people the student rated)
+    reviewee_ids = {a.reviewee_id for a in answers}
+    reviewees = {
+        rid: User.query.get(rid) for rid in reviewee_ids
+    }
+
+    # Gather any comments this student made
+    assignments = ReviewAssignment.query.filter_by(
+        class_id=class_id,
+        reviewer_id=student_id
+    ).all()
+
+    comments_map = {
+        a.reviewee_id: a.comment for a in assignments
+    }
 
     return render_template(
         "review_detail.html",
@@ -530,6 +545,7 @@ def review_detail(class_id, student_id):
         reviewees=reviewees,
         comments_map=comments_map
     )
+
 
 
 

@@ -61,3 +61,8 @@ class ReviewAnswer(db.Model):
     question_id = db.Column(db.Integer, db.ForeignKey('review_question.id'))
     score = db.Column(db.Integer)
 
+class JoinRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    class_id = db.Column(db.Integer, db.ForeignKey('class.id'))
+    status = db.Column(db.String(20), default='pending')  # "pending", "approved", "rejected"

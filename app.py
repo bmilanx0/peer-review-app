@@ -2,7 +2,7 @@
 from flask import Flask, request, jsonify, render_template, redirect, session, url_for, flash
 from flask_talisman import Talisman
 from config import Config
-from models import db, User, Class, Team, TeamMembership, ReviewAssignment, ReviewQuestion, ReviewAnswer
+from models import db, User, Class, Team, TeamMembership, ReviewAssignment, ReviewQuestion, ReviewAnswer, JoinRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
@@ -73,6 +73,65 @@ def register():
 
     return render_template('register.html', classes=classes)
 
+@app.route('/join_class', methods=['GET', 'POST'])
+def join_class():
+    user = User.query.get(session.get('user_id'))
+    if not user or user.role != 'student':
+        flash("Unauthorized access.", "danger")
+        return redirect('/login')
+
+    available_classes = Class.query.all()
+
+    if request.method == 'POST':
+        class_id = int(request.form['class_id'])
+
+        existing = JoinRequest.query.filter_by(student_id=user.id, class_id=class_id).first()
+        already_member = db.session.query(TeamMembership).join(Team).filter(
+            Team.class_id == class_id,
+            TeamMembership.user_id == user.id
+        ).first()
+
+        if already_member:
+            flash("You're already in this class.", "info")
+        elif existing and existing.status == "pending":
+            flash("You've already requested to join this class.", "info")
+        else:
+            new_request = JoinRequest(student_id=user.id, class_id=class_id, status="pending")
+            db.session.add(new_request)
+            db.session.commit()
+            flash("Join request submitted! Please wait for professor approval.", "success")
+
+        return redirect('/dashboard')
+
+    return render_template("join_class.html", classes=available_classes)
+
+@app.route('/approve_join/<int:request_id>', methods=['POST'])
+def approve_join(request_id):
+    req = JoinRequest.query.get_or_404(request_id)
+    if req.status != 'pending':
+        flash("Request already processed.", "warning")
+        return redirect('/dashboard')
+
+    team = Team.query.filter_by(class_id=req.class_id).first()
+    if team:
+        membership = TeamMembership(user_id=req.student_id, team_id=team.id)
+        db.session.add(membership)
+        req.status = 'approved'
+        db.session.commit()
+        flash("Student approved and added to class.", "success")
+    else:
+        flash("No team exists for this class yet.", "danger")
+
+    return redirect('/dashboard')
+
+@app.route('/reject_join/<int:request_id>', methods=['POST'])
+def reject_join(request_id):
+    req = JoinRequest.query.get_or_404(request_id)
+    req.status = 'rejected'
+    db.session.commit()
+    flash("Join request rejected.", "info")
+    return redirect('/dashboard')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -114,30 +173,33 @@ def dashboard():
         classes = Class.query.filter_by(professor_id=user.id).all()
         for cls in classes:
             cls.teams = Team.query.filter_by(class_id=cls.id).all()
+            cls.students = (
+                db.session.query(User)
+                .join(TeamMembership, User.id == TeamMembership.user_id)
+                .join(Team, TeamMembership.team_id == Team.id)
+                .filter(Team.class_id == cls.id)
+                .distinct()
+                .all()
+            )
+            cls.join_requests = JoinRequest.query.filter_by(class_id=cls.id, status='pending').all()
         return render_template('professor_dashboard.html', user=user, classes=classes)
 
     elif user.role == 'student':
-        memberships = TeamMembership.query.filter_by(user_id=user.id).all()
+        class_id = session.get("class_id")
+        if not class_id:
+            flash("Please select a class to continue.", "info")
+            return redirect("/select_class")
 
-        if len(memberships) > 1 and not session.get("class_id"):
-            # ask the student to select a class
-            class_options = []
-            for m in memberships:
-                team = Team.query.get(m.team_id)
-                cls = Class.query.get(team.class_id)
-                class_options.append(cls)
-            return render_template('select_class.html', classes=class_options)
-
-        # Get selected class
-        class_id = session.get("class_id") or Class.query.get(Team.query.get(memberships[0].team_id).class_id).id
-        team = Team.query.filter_by(class_id=class_id).join(TeamMembership).filter_by(user_id=user.id).first()
+        membership = TeamMembership.query.join(Team).filter(
+            Team.class_id == class_id,
+            TeamMembership.user_id == user.id
+        ).first()
 
         teammates = []
         already_reviewed_ids = []
-        questions = []
 
-        if team:
-            team_id = team.id
+        if membership:
+            team = Team.query.get(membership.team_id)
             all_members = TeamMembership.query.filter_by(team_id=team.id).all()
             teammates = [User.query.get(m.user_id) for m in all_members if m.user_id != user.id]
 
@@ -145,18 +207,21 @@ def dashboard():
             already_reviewed_ids = list(set([r.reviewee_id for r in reviews_done]))
 
             questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
+            return render_template('student_dashboard.html',
+                                   user=user,
+                                   teammates=teammates,
+                                   questions=questions,
+                                   already_reviewed_ids=already_reviewed_ids,
+                                   class_id=class_id,
+                                   team_id=team.id)
         else:
-            team_id = None
+            flash("You're not yet in a team for this class.", "warning")
+            return redirect('/select_class')
 
-        return render_template(
-            'student_dashboard.html',
-            user=user,
-            teammates=teammates,
-            questions=questions,
-            already_reviewed_ids=already_reviewed_ids,
-            class_id=class_id,
-            team_id=team_id
-        )
+    flash("Unknown user role.", "danger")
+    return redirect('/login')
+
+
 
 @app.route('/choose_class', methods=['POST'])
 def choose_class():

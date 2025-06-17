@@ -333,26 +333,46 @@ def class_summary(class_id):
         flash("Access denied.", "danger")
         return redirect('/login')
 
+    # Get teams in this class
+    teams = Team.query.filter_by(class_id=class_id).all()
+    team_memberships = {}
+    all_students = []
+
+    for team in teams:
+        members = TeamMembership.query.filter_by(team_id=team.id).all()
+        users = [User.query.get(m.user_id) for m in members]
+        team_memberships[team.id] = users
+        all_students.extend(users)
+
+    # Remove duplicates
+    all_students = list({s.id: s for s in all_students}.values())
+
+    # Gather scores per student
     answers = ReviewAnswer.query.filter_by(class_id=class_id).all()
-    students = {}
+    scores = {}
+    counts = {}
+    for a in answers:
+        if a.reviewee_id not in scores:
+            scores[a.reviewee_id] = 0
+            counts[a.reviewee_id] = 0
+        scores[a.reviewee_id] += a.score
+        counts[a.reviewee_id] += 1
 
-    for ans in answers:
-        if ans.reviewee_id not in students:
-            students[ans.reviewee_id] = []
-        students[ans.reviewee_id].append(ans.score)
-
+    # Compile result rows
     results = []
-    for student_id, scores in students.items():
-        student = User.query.get(student_id)
-        avg_score = round(sum(scores) / len(scores), 2)
+    for student in all_students:
+        avg_score = round(scores.get(student.id, 0) / counts.get(student.id, 1), 2)
+        team_id = TeamMembership.query.filter_by(user_id=student.id).first().team_id
         results.append({
             "student": f"{student.first_name} {student.last_name}",
             "email": student.email,
             "average_score": avg_score,
+            "team": team_id,
             "id": student.id
         })
 
     return render_template("class_summary.html", results=results, class_id=class_id)
+
 
 
 @app.route('/review_detail/<int:class_id>/<int:student_id>')
@@ -362,26 +382,27 @@ def review_detail(class_id, student_id):
         flash("Access denied.", "danger")
         return redirect('/login')
 
+    # Get all answers and comments made by this student in this class
     answers = ReviewAnswer.query.filter_by(class_id=class_id, reviewer_id=student_id).all()
-    questions = {q.id: q.question_text for q in ReviewQuestion.query.filter_by(class_id=class_id).all()}
-    reviewees = {a.reviewee_id: User.query.get(a.reviewee_id) for a in answers}
     assignments = ReviewAssignment.query.filter_by(class_id=class_id, reviewer_id=student_id).all()
-    comments_map = {a.reviewee_id: a.comment for a in assignments}
 
-    # For displaying reviewee and reviewer full names
-    reviewers_map = {a.reviewer_id: User.query.get(a.reviewer_id) for a in answers}
-    reviewees_map = {a.reviewee_id: User.query.get(a.reviewee_id) for a in answers}
+    # Load questions
+    questions = {q.id: q.question_text for q in ReviewQuestion.query.filter_by(class_id=class_id).all()}
+
+    # Get users that were reviewed
+    reviewees = {a.reviewee_id: User.query.get(a.reviewee_id) for a in answers}
+
+    # Get comments for each reviewee
+    comments_map = {a.reviewee_id: a.comment for a in assignments}
 
     return render_template(
         "review_detail.html",
         answers=answers,
         questions=questions,
         reviewees=reviewees,
-        comments_map=comments_map,
-        reviewers_map=reviewers_map,
-        reviewees_map=reviewees_map,
-        class_id=class_id
+        comments_map=comments_map
     )
+
 
 
 # Final run setup for Render

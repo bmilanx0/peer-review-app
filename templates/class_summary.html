@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
-{% block title %}Class Review Summary{% endblock %}
-
 {% block content %}
-<h2 class="mb-4">Class Review Summary</h2>
+
+<h2>Class Review Summary</h2>
 
 <!-- Average Scores Table -->
 <h4>Average Scores</h4>
-<table class="table table-bordered table-striped">
-  <thead class="table-dark">
+<table class="table table-bordered table-striped table-dark">
+  <thead>
     <tr>
       <th>Student</th>
       <th>Email</th>
       <th>Average Score</th>
+      <th>Team</th>
     </tr>
   </thead>
   <tbody>
@@ -20,20 +20,25 @@
       <td>{{ r.student }}</td>
       <td>{{ r.email }}</td>
       <td>{{ r.average_score }}</td>
+      <td>{{ r.team }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 
-<!-- Comments Table -->
+<!-- Peer Comments Navigation -->
 <h4 class="mt-5">Peer Comments & Reviews</h4>
 <p>Select a student to view what they wrote about others:</p>
 <ul>
-  {% for s in results %}
-  <li><a href="{{ url_for('review_detail', class_id=class_id, student_id=s.id) }}">{{ s.student }}</a></li>
+  {% for r in results %}
+  <li>
+    <a href="{{ url_for('review_detail', class_id=class_id, student_id=r.id) }}">
+      {{ r.student }}
+    </a>
+  </li>
   {% endfor %}
 </ul>
 
+<a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-4">Back to Dashboard</a>
 
-<a href="/dashboard" class="btn btn-secondary mt-4">Back to Dashboard</a>
 {% endblock %}

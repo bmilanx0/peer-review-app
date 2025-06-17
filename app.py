@@ -1,7 +1,6 @@
 # app.py
 from flask import Flask, request, jsonify, render_template, redirect, session, url_for, flash, abort
 from flask_talisman import Talisman
-from flask_login import current_user, login_required
 from config import Config
 from models import db, User, Class, Team, TeamMembership, ReviewAssignment, ReviewQuestion, ReviewAnswer, JoinRequest
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -75,25 +74,6 @@ def register():
     return render_template('register.html', classes=classes)
 
 
-@app.route('/student/join_class', methods=['GET', 'POST'])
-@login_required
-def join_class():
-    if current_user.role != 'student':
-        abort(403)
-
-    if request.method == 'POST':
-        class_id = int(request.form['class_id'])
-        existing = JoinRequest.query.filter_by(student_id=current_user.id, class_id=class_id).first()
-        if not existing:
-            db.session.add(JoinRequest(student_id=current_user.id, class_id=class_id, approved=False))
-            db.session.commit()
-            flash("Join request submitted.")
-        else:
-            flash("You have already submitted a request for this class.")
-        return redirect(url_for('student_dashboard'))
-
-    classes = Class.query.all()
-    return render_template('join_class.html', classes=classes)
 
 @app.route('/approve_join/<int:request_id>', methods=['POST'])
 def approve_join(request_id):
@@ -306,54 +286,7 @@ def assign_student_ui():
     flash(f"{student.first_name} assigned to Team {team.id}", "success")
     return redirect(f'/class/{team.class_id}')
 
-@app.route('/professor/create_team/<int:class_id>', methods=['POST'])
-@login_required
-def create_team(class_id):
-    if current_user.role != 'professor':
-        abort(403)
 
-    team_count = Team.query.filter_by(class_id=class_id).count()
-    new_team_name = f"Team {team_count + 1}"
-    team = Team(name=new_team_name, class_id=class_id)
-    db.session.add(team)
-    db.session.commit()
-    flash("Team created.")
-    return redirect(url_for('class_dashboard', class_id=class_id))
-
-@app.route('/professor/class/<int:class_id>')
-@login_required
-def class_dashboard(class_id):
-    if current_user.role != 'professor':
-        abort(403)
-
-    approved_students = db.session.query(Student).join(JoinRequest).filter(
-        JoinRequest.class_id == class_id,
-        JoinRequest.approved == True
-    ).all()
-
-    teams = Team.query.filter_by(class_id=class_id).all()
-    return render_template('class_dashboard.html', students=approved_students, teams=teams, class_id=class_id)
-
-@app.route('/student/class/<int:class_id>')
-@login_required
-def student_class_view(class_id):
-    if current_user.role != 'student':
-        abort(403)
-
-    approved = JoinRequest.query.filter_by(student_id=current_user.id, class_id=class_id, approved=True).first()
-    if not approved:
-        flash("You are not registered in this class.")
-        return redirect(url_for('student_dashboard'))
-
-    team = db.session.query(Team).join(StudentTeam).filter(
-        Team.class_id == class_id,
-        StudentTeam.student_id == current_user.id
-    ).first()
-
-    if not team:
-        flash("You are not assigned to a team in this class.")
-
-    return render_template('student_class_view.html', team=team, class_id=class_id)
 
 
 @app.route('/submit_review_form', methods=['POST'])

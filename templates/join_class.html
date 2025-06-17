@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Join a New Class</h2>
+  <form method="POST" action="/join_class">
+    <div class="mb-3">
+      <label for="class_id" class="form-label">Select Class</label>
+      <select name="class_id" class="form-select" required>
+        {% for cls in classes %}
+        <option value="{{ cls.id }}">{{ cls.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Join Class</button>
+  </form>
+</div>
+{% endblock %}

@@ -9,19 +9,19 @@
   <h4 class="mb-3">Your Classes</h4>
 
   {% if classes %}
-    <div class="list-group mb-4">
-      {% for cls in classes %}
-        <div class="list-group-item d-flex justify-content-between align-items-center">
-          <strong>{{ cls.name }}</strong>
-          <div>
-            <a href="/class/{{ cls.id }}" class="btn btn-outline-secondary btn-sm me-2">Manage Class</a>
-            <a href="/class_summary/{{ cls.id }}" class="btn btn-primary btn-sm">View Summary</a>
-          </div>
-        </div>
-      {% endfor %}
+  <div class="list-group mb-4">
+    {% for cls in classes %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+      <strong>{{ cls.name }}</strong>
+      <div>
+        <a href="/class/{{ cls.id }}" class="btn btn-outline-secondary btn-sm me-2">Manage Class</a>
+        <a href="/class_summary/{{ cls.id }}" class="btn btn-primary btn-sm">View Summary</a>
+      </div>
     </div>
+    {% endfor %}
+  </div>
   {% else %}
-    <p class="text-muted">No classes created yet.</p>
+  <p class="text-muted">No classes created yet.</p>
   {% endif %}
 
   <!-- Create New Class -->
@@ -43,3 +43,20 @@
 </div>
 {% endblock %}
 
+<h4>Pending Join Requests</h4>
+{% for cls in classes %}
+<h5>{{ cls.name }}</h5>
+<ul>
+  {% for req in cls.join_requests %}
+  <li>
+    {{ req.student.first_name }} {{ req.student.last_name }} -
+    <form method="POST" action="{{ url_for('approve_join', request_id=req.id) }}" style="display:inline;">
+      <button class="btn btn-success btn-sm">Approve</button>
+    </form>
+    <form method="POST" action="{{ url_for('reject_join', request_id=req.id) }}" style="display:inline;">
+      <button class="btn btn-danger btn-sm">Reject</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endfor %}

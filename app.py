@@ -115,6 +115,9 @@ def dashboard():
 
     if user.role == 'professor':
         classes = Class.query.filter_by(professor_id=user.id).all()
+        join_requests_by_class = {}
+        student_ids = set()
+
         for cls in classes:
             cls.teams = Team.query.filter_by(class_id=cls.id).all()
             cls.students = (
@@ -125,9 +128,15 @@ def dashboard():
                 .all()
             )
             cls.join_requests = JoinRequest.query.filter_by(class_id=cls.id, status='pending').all()
-        return render_template('professor_dashboard.html', user=user, classes=classes)
+            for req in cls.join_requests:
+                student_ids.add(req.student_id)
 
-    if user.role == 'student':
+        students = User.query.filter(User.id.in_(student_ids)).all()
+        student_map = {s.id: s for s in students}
+
+        return render_template('professor_dashboard.html', user=user, classes=classes, student_map=student_map)
+
+    elif user.role == 'student':
         class_id = session.get("class_id")
         if not class_id:
             return redirect("/select_class")
@@ -150,7 +159,7 @@ def dashboard():
         else:
             flash("Not in a team for this class.", "warning")
             return redirect('/select_class')
-    return redirect('/login')
+
 
 @app.route('/create_class_ui', methods=['POST'])
 def create_class_ui():
@@ -336,11 +345,6 @@ def reject_join(request_id):
     db.session.commit()
     flash("Request rejected.", "info")
     return redirect('/dashboard')
-
-
-
-
-
 
 @app.route('/choose_class', methods=['POST'])
 def choose_class():

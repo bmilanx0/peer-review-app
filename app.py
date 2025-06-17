@@ -102,25 +102,6 @@ def reject_join(request_id):
     flash("Join request rejected.", "info")
     return redirect('/dashboard')
 
-@app.route('/professor/approve_requests/<int:class_id>', methods=['GET', 'POST'])
-@login_required
-def approve_requests(class_id):
-    if current_user.role != 'professor':
-        abort(403)
-
-    if request.method == 'POST':
-        for req_id, decision in request.form.items():
-            join_request = JoinRequest.query.get(int(req_id))
-            if decision == 'approve':
-                join_request.approved = True
-            elif decision == 'deny':
-                db.session.delete(join_request)
-        db.session.commit()
-        flash("Join requests updated.")
-        return redirect(url_for('class_dashboard', class_id=class_id))
-
-    requests = JoinRequest.query.filter_by(class_id=class_id, approved=False).all()
-    return render_template('approve_requests.html', requests=requests)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

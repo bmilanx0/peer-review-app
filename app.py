@@ -81,6 +81,7 @@ def login():
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
             session['user_id'] = user.id
+            session.pop('class_id', None)  # clear previous class
             flash(f"Welcome back, {user.first_name}!", "success")
             return redirect('/dashboard')
 
@@ -88,6 +89,7 @@ def login():
         return render_template('login.html')
 
     return render_template('login.html')
+
 
 @app.route('/logout')
 def logout():
@@ -109,29 +111,51 @@ def dashboard():
         return render_template('professor_dashboard.html', user=user, classes=classes)
 
     elif user.role == 'student':
-        membership = TeamMembership.query.filter_by(user_id=user.id).first()
+        memberships = TeamMembership.query.filter_by(user_id=user.id).all()
+
+        if len(memberships) > 1 and not session.get("class_id"):
+            # ask the student to select a class
+            class_options = []
+            for m in memberships:
+                team = Team.query.get(m.team_id)
+                cls = Class.query.get(team.class_id)
+                class_options.append(cls)
+            return render_template('select_class.html', classes=class_options)
+
+        # Get selected class
+        class_id = session.get("class_id") or Class.query.get(Team.query.get(memberships[0].team_id).class_id).id
+        team = Team.query.filter_by(class_id=class_id).join(TeamMembership).filter_by(user_id=user.id).first()
+
         teammates = []
         already_reviewed_ids = []
+        questions = []
 
-    if membership:
-        team = Team.query.get(membership.team_id)
         if team:
-            class_id = team.class_id
-            # All teammates except self
+            team_id = team.id
             all_members = TeamMembership.query.filter_by(team_id=team.id).all()
             teammates = [User.query.get(m.user_id) for m in all_members if m.user_id != user.id]
 
-            # Find who the student already reviewed
             reviews_done = ReviewAnswer.query.filter_by(reviewer_id=user.id, class_id=class_id).all()
             already_reviewed_ids = list(set([r.reviewee_id for r in reviews_done]))
 
             questions = ReviewQuestion.query.filter_by(class_id=class_id).all()
         else:
-            questions = []
-    else:
-        questions = []
+            team_id = None
 
-    return render_template('student_dashboard.html', user=user, teammates=teammates, questions=questions, already_reviewed_ids=already_reviewed_ids)
+        return render_template(
+            'student_dashboard.html',
+            user=user,
+            teammates=teammates,
+            questions=questions,
+            already_reviewed_ids=already_reviewed_ids,
+            class_id=class_id,
+            team_id=team_id
+        )
+
+@app.route('/choose_class', methods=['POST'])
+def choose_class():
+    session['class_id'] = request.form['class_id']
+    return redirect('/dashboard')
 
 
 @app.route('/create_class_ui', methods=['POST'])
@@ -191,6 +215,7 @@ def submit_review_form():
     user = User.query.get(session.get('user_id'))
     if not user or user.role != 'student':
         return redirect('/login')
+
     reviewee_id = int(request.form['reviewee_id'])
     reviewee = User.query.get(reviewee_id)
 
@@ -215,21 +240,22 @@ def submit_review_form():
         )
         db.session.add(answer)
 
-        student_comment = request.form.get('student_comment', '').strip()
+    # Get the comment from the form AFTER the loop
+    student_comment = request.form.get('student_comment', '').strip()
 
-        if student_comment:
-            comment_entry = ReviewAssignment(
+    if student_comment:
+        comment_entry = ReviewAssignment(
             reviewer_id=user.id,
             reviewee_id=reviewee.id,
             class_id=class_id,
             comment=student_comment
-    )
-    db.session.add(comment_entry)
-
+        )
+        db.session.add(comment_entry)
 
     db.session.commit()
     flash("Review submitted successfully.", "success")
     return redirect('/dashboard')
+
 
 
 @app.route('/class_reviews/<int:class_id>')

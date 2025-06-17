@@ -26,5 +26,9 @@
       {% endfor %}
     </div>
   </div>
+  <div class="text-center mt-4">
+    <a href="{{ url_for('class_summary', class_id=request.view_args['class_id']) }}" class="btn btn-secondary">← Back to
+      Summary</a>
+  </div>
 </div>
 {% endblock %}

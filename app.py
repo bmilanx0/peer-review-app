@@ -398,7 +398,7 @@ def class_dashboard(class_id):
     cls = Class.query.get_or_404(class_id)
     teams = Team.query.filter_by(class_id=class_id).all()
 
-    # ✅ Show only students in teams for this class
+    # Only include students who registered for this class
     enrolled_students = (
         db.session.query(User)
         .join(TeamMembership, User.id == TeamMembership.user_id)
@@ -408,7 +408,6 @@ def class_dashboard(class_id):
         .all()
     )
 
-    # Organize students by team
     team_memberships = {}
     for team in teams:
         members = TeamMembership.query.filter_by(team_id=team.id).all()
@@ -421,6 +420,7 @@ def class_dashboard(class_id):
         students=enrolled_students,
         team_memberships=team_memberships
     )
+
 
 
 @app.route('/add_question/<int:class_id>', methods=['GET', 'POST'])
@@ -465,21 +465,16 @@ def class_summary(class_id):
         flash("Access denied.", "danger")
         return redirect('/login')
 
-    # Get teams in this class
     teams = Team.query.filter_by(class_id=class_id).all()
-    team_memberships = {}
-    all_students = []
 
+    # Build team_memberships dictionary
+    team_memberships = {}
     for team in teams:
         members = TeamMembership.query.filter_by(team_id=team.id).all()
         users = [User.query.get(m.user_id) for m in members]
         team_memberships[team.id] = users
-        all_students.extend(users)
 
-    # Remove duplicates
-    all_students = list({s.id: s for s in all_students}.values())
-
-    # Gather scores per student
+    # Gather scores
     answers = ReviewAnswer.query.filter_by(class_id=class_id).all()
     scores = {}
     counts = {}
@@ -490,20 +485,21 @@ def class_summary(class_id):
         scores[a.reviewee_id] += a.score
         counts[a.reviewee_id] += 1
 
-    # Compile result rows
-    results = []
-    for student in all_students:
-        avg_score = round(scores.get(student.id, 0) / counts.get(student.id, 1), 2)
-        team_id = TeamMembership.query.filter_by(user_id=student.id).first().team_id
-        results.append({
-            "student": f"{student.first_name} {student.last_name}",
-            "email": student.email,
-            "average_score": avg_score,
-            "team": team_id,
-            "id": student.id
-        })
+    # Organize results by team
+    results_by_team = {}
+    for team_id, members in team_memberships.items():
+        team_results = []
+        for student in members:
+            avg_score = round(scores.get(student.id, 0) / counts.get(student.id, 1), 2)
+            team_results.append({
+                "student": f"{student.first_name} {student.last_name}",
+                "email": student.email,
+                "average_score": avg_score,
+                "id": student.id
+            })
+        results_by_team[team_id] = team_results
 
-    return render_template("class_summary.html", results=results, class_id=class_id)
+    return render_template("class_summary.html", results_by_team=results_by_team, class_id=class_id)
 
 
 

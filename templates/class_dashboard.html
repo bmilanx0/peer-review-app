@@ -1,66 +1,65 @@
-{% extends "base.html" %}
-{% block title %}Class Dashboard{% endblock %}
+{% extends 'base.html' %}
+
 {% block content %}
-<div class="container">
-  <div class="text-center mb-4">
-    <h3>{{ cls.name }}</h3>
-  </div>
+<div class="container my-5">
+  <h2 class="text-center mb-4">{{ cls.name }} Dashboard</h2>
 
-  <div class="mb-4">
-    <form method="POST" action="{{ url_for('create_team_ui') }}">
-      <input type="hidden" name="class_id" value="{{ cls.id }}">
-      <button type="submit" class="btn btn-primary">+ Create New Team</button>
-    </form>
-  </div>
+  <!-- Create Team -->
+  <form action="{{ url_for('create_team_ui') }}" method="POST" class="mb-4 text-center">
+    <input type="hidden" name="class_id" value="{{ cls.id }}">
+    <button type="submit" class="btn btn-primary">+ Create New Team</button>
+  </form>
 
+  <!-- Display Teams and Members -->
   <div class="row">
-    {% for team_id, members in team_memberships.items() %}
+    {% for team in teams %}
     <div class="col-md-6 mb-4">
-      <div class="card">
+      <div class="card border-info">
         <div class="card-header bg-info text-white">
-          <strong>Team {{ loop.index }}</strong>
+          Team {{ team.id }}
         </div>
-        <div class="card-body">
-          {% if members %}
-          <ul class="list-group">
-            {% for student in members %}
-            <li class="list-group-item">
-              {{ student.first_name }} {{ student.last_name }} - {{ student.email }}
-            </li>
-            {% endfor %}
-          </ul>
+        <ul class="list-group list-group-flush">
+          {% for student in team_memberships[team.id] %}
+          <li class="list-group-item">{{ student.first_name }} {{ student.last_name }} - {{ student.email }}</li>
           {% else %}
-          <p class="text-muted">No members in this team yet.</p>
-          {% endif %}
-        </div>
+          <li class="list-group-item text-muted">No members in this team yet.</li>
+          {% endfor %}
+        </ul>
       </div>
     </div>
     {% endfor %}
   </div>
 
-  <div class="mt-5">
-    <h5>Assign Student to Team</h5>
-    <form method="POST" action="{{ url_for('assign_student_ui') }}" class="row g-3">
-      <div class="col-md-5">
-        <select class="form-select" name="student_email" required>
-          {% for student in cls.students %}
-          <option value="{{ student.email }}">
-            {{ student.first_name }} {{ student.last_name }} - {{ student.email }}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-4">
-        <select name="team_id" class="form-select" required>
-          {% for team in teams %}
-          <option value="{{ team.id }}">Team {{ loop.index }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-3">
-        <button type="submit" class="btn btn-success">Assign</button>
-      </div>
-    </form>
+  <!-- Assign Student to Team -->
+  <h4 class="mt-4">Assign Student to Team</h4>
+  <form action="{{ url_for('assign_student_ui') }}" method="POST" class="row g-2 align-items-center">
+    <input type="hidden" name="class_id" value="{{ cls.id }}">
+
+    <div class="col-md-5">
+      <select name="student_email" class="form-select" required>
+        {% for student in students %}
+        <option value="{{ student.email }}">{{ student.first_name }} {{ student.last_name }} ({{ student.email }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <select name="team_id" class="form-select" required>
+        {% for team in teams %}
+        <option value="{{ team.id }}">Team {{ team.id }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-success">Assign</button>
+    </div>
+  </form>
+
+  <!-- Back Button -->
+  <div class="mt-4">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
   </div>
 </div>
 {% endblock %}

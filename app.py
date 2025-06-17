@@ -77,33 +77,26 @@ def register():
 def join_class():
     user = User.query.get(session.get('user_id'))
     if not user or user.role != 'student':
-        flash("Unauthorized access.", "danger")
         return redirect('/login')
 
-    available_classes = Class.query.all()
+    current_classes = [Team.query.get(m.team_id).class_id for m in TeamMembership.query.filter_by(user_id=user.id).all()]
+    available_classes = Class.query.filter(~Class.id.in_(current_classes)).all()
 
     if request.method == 'POST':
         class_id = int(request.form['class_id'])
 
-        existing = JoinRequest.query.filter_by(student_id=user.id, class_id=class_id).first()
-        already_member = db.session.query(TeamMembership).join(Team).filter(
-            Team.class_id == class_id,
-            TeamMembership.user_id == user.id
-        ).first()
-
-        if already_member:
-            flash("You're already in this class.", "info")
-        elif existing and existing.status == "pending":
-            flash("You've already requested to join this class.", "info")
+        # Prevent duplicates
+        if JoinRequest.query.filter_by(student_id=user.id, class_id=class_id).first():
+            flash("You already requested to join this class.", "warning")
         else:
-            new_request = JoinRequest(student_id=user.id, class_id=class_id, status="pending")
+            new_request = JoinRequest(student_id=user.id, class_id=class_id, status='pending')
             db.session.add(new_request)
             db.session.commit()
-            flash("Join request submitted! Please wait for professor approval.", "success")
-
+            flash("Join request submitted successfully.", "success")
         return redirect('/dashboard')
 
-    return render_template("join_class.html", classes=available_classes)
+    return render_template('join_class.html', classes=available_classes)
+
 
 @app.route('/approve_join/<int:request_id>', methods=['POST'])
 def approve_join(request_id):
@@ -136,24 +129,42 @@ def reject_join(request_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        try:
-            email = request.form['email'].strip().lower()
-            password = request.form['password']
-        except KeyError:
-            flash("Invalid form submission. Try again.", "danger")
-            return render_template('login.html')
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
 
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
             session['user_id'] = user.id
-            session.pop('class_id', None)  # clear previous class
-            flash(f"Welcome back, {user.first_name}!", "success")
-            return redirect('/dashboard')
+
+            if user.role == 'professor':
+                flash(f"Welcome, {user.first_name}!", "success")
+                return redirect('/dashboard')
+
+            elif user.role == 'student':
+                flash(f"Welcome, {user.first_name}!", "success")
+                return redirect('/select_class')
 
         flash("Invalid credentials. Please try again.", "danger")
         return render_template('login.html')
 
     return render_template('login.html')
+
+
+@app.route('/select_class', methods=['GET', 'POST'])
+def select_class():
+    user = User.query.get(session.get('user_id'))
+    if not user or user.role != 'student':
+        return redirect('/login')
+
+    memberships = TeamMembership.query.filter_by(user_id=user.id).all()
+    class_ids = list(set([Team.query.get(m.team_id).class_id for m in memberships]))
+    classes = Class.query.filter(Class.id.in_(class_ids)).all()
+
+    if request.method == 'POST':
+        session['class_id'] = int(request.form['class_id'])
+        return redirect('/dashboard')
+
+    return render_template('select_class.html', classes=classes)
 
 
 @app.route('/logout')

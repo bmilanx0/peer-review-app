@@ -26,26 +26,14 @@
 </table>
 
 <!-- Comments Table -->
-<h4 class="mt-5">Peer Comments</h4>
-<table class="table table-bordered">
-  <thead>
-    <tr>
-      <th>From</th>
-      <th>To</th>
-      <th>Comment</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for c in comments %}
-    <tr>
-      <td>{{ c.reviewer_id }}</td>
-      <td>{{ c.reviewee_id }}</td>
-      <td>{{ c.comment }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<h4 class="mt-5">Peer Comments & Reviews</h4>
+<p>Select a student to view what they wrote about others:</p>
+<ul>
+  {% for s in results %}
+  <li><a href="{{ url_for('review_detail', class_id=class_id, student_id=s.id) }}">{{ s.student }}</a></li>
+  {% endfor %}
+</ul>
+
 
 <a href="/dashboard" class="btn btn-secondary mt-4">Back to Dashboard</a>
 {% endblock %}
-

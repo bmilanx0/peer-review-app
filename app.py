@@ -333,7 +333,6 @@ def class_summary(class_id):
         flash("Access denied.", "danger")
         return redirect('/login')
 
-    # Get scores from ReviewAnswer
     answers = ReviewAnswer.query.filter_by(class_id=class_id).all()
     students = {}
 
@@ -349,13 +348,12 @@ def class_summary(class_id):
         results.append({
             "student": f"{student.first_name} {student.last_name}",
             "email": student.email,
-            "average_score": avg_score
+            "average_score": avg_score,
+            "id": student.id
         })
 
-    # Get peer comments
-    comments = ReviewAssignment.query.filter_by(class_id=class_id).all()
+    return render_template("class_summary.html", results=results, class_id=class_id)
 
-    return render_template("class_summary.html", results=results, comments=comments)
 
 @app.route('/review_detail/<int:class_id>/<int:student_id>')
 def review_detail(class_id, student_id):
@@ -364,11 +362,26 @@ def review_detail(class_id, student_id):
         flash("Access denied.", "danger")
         return redirect('/login')
 
-    answers = ReviewAnswer.query.filter_by(class_id=class_id, reviewee_id=student_id).all()
+    answers = ReviewAnswer.query.filter_by(class_id=class_id, reviewer_id=student_id).all()
     questions = {q.id: q.question_text for q in ReviewQuestion.query.filter_by(class_id=class_id).all()}
-    reviewers = {a.reviewer_id: User.query.get(a.reviewer_id) for a in answers}
+    reviewees = {a.reviewee_id: User.query.get(a.reviewee_id) for a in answers}
+    assignments = ReviewAssignment.query.filter_by(class_id=class_id, reviewer_id=student_id).all()
+    comments_map = {a.reviewee_id: a.comment for a in assignments}
 
-    return render_template("review_detail.html", answers=answers, questions=questions, reviewers=reviewers)
+    # For displaying reviewee and reviewer full names
+    reviewers_map = {a.reviewer_id: User.query.get(a.reviewer_id) for a in answers}
+    reviewees_map = {a.reviewee_id: User.query.get(a.reviewee_id) for a in answers}
+
+    return render_template(
+        "review_detail.html",
+        answers=answers,
+        questions=questions,
+        reviewees=reviewees,
+        comments_map=comments_map,
+        reviewers_map=reviewers_map,
+        reviewees_map=reviewees_map,
+        class_id=class_id
+    )
 
 
 # Final run setup for Render

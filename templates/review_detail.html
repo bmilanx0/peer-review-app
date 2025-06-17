@@ -1,14 +1,23 @@
-<h2>Review Details for Student</h2>
-<table border="1">
-  <tr><th>Question</th><th>Score</th><th>Comment</th><th>Reviewer</th></tr>
-  {% for a in answers %}
-  <tr>
-    <td>{{ questions[a.question_id] }}</td>
-    <td>{{ a.score }}</td>
-    <td>{{ a.comment or "—" }}</td>
-    <td>{{ reviewers[a.reviewer_id].first_name }} {{ reviewers[a.reviewer_id].last_name }}</td>
-  </tr>
-  {% endfor %}
-</table>
-<a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+{% extends 'base.html' %}
+{% block content %}
 
+<h2>Reviews by Student</h2>
+
+{% for reviewee_id, reviewee in reviewees.items() %}
+<h4>{{ reviewee.first_name }} {{ reviewee.last_name }}</h4>
+<ul>
+  {% for a in answers if a.reviewee_id == reviewee_id %}
+  <li>
+    <strong>{{ questions[a.question_id] }}:</strong> {{ a.score }}
+  </li>
+  {% endfor %}
+  <li>
+    <strong>Overall Comment:</strong> {{ comments_map.get(reviewee_id, "—") }}
+  </li>
+</ul>
+{% endfor %}
+
+<a href="{{ url_for('class_summary', class_id=request.view_args['class_id']) }}" class="btn btn-secondary mt-4">Back to
+  Summary</a>
+
+{% endblock %}

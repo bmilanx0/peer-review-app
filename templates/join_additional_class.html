@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Join Another Class{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+  <h2 class="mb-4">Join an Additional Class</h2>
+
+  <form method="POST" class="mx-auto" style="max-width: 400px;">
+    <div class="form-group mb-3">
+      <label for="class_id" class="form-label">Select a Class</label>
+      <select class="form-select" name="class_id" required>
+        {% for cls in classes %}
+          <option value="{{ cls.id }}">{{ cls.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-success">Submit Join Request</button>
+  </form>
+
+  <a href="{{ url_for('select_class') }}" class="btn btn-secondary mt-3">← Back to Class Selection</a>
+</div>
+{% endblock %}
+

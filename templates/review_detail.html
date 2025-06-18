@@ -1,29 +1,23 @@
 {% extends "base.html" %}
-
+{% block title %}Review Detail{% endblock %}
 {% block content %}
-<div class="container mt-5">
+<div class="container mt-4">
   <h2 class="text-center mb-4">Reviews by {{ student.first_name }} {{ student.last_name }}</h2>
 
   {% for reviewee_id, reviewee in reviewees.items() %}
-  <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-      {{ reviewee.first_name }} {{ reviewee.last_name }}
-    </div>
-    <div class="card-body">
-      <ul class="list-group mb-3">
-        {% for a in answers if a.reviewee_id == reviewee_id %}
-        <li class="list-group-item">
-          <strong>{{ questions[a.question_id] }}</strong>: {{ a.score }}
-        </li>
-        {% endfor %}
-      </ul>
-      <p><strong>Overall Comment:</strong> {{ comments_map.get(reviewee_id, "—") }}</p>
-    </div>
-  </div>
+  <h4>{{ reviewee.first_name }} {{ reviewee.last_name }}</h4>
+  <ul class="list-group mb-3">
+    {% for a in answers if a.reviewee_id == reviewee_id %}
+    <li class="list-group-item">
+      <strong>{{ questions[a.question_id] }}:</strong> {{ a.score }}
+    </li>
+    {% endfor %}
+    <li class="list-group-item">
+      <strong>Overall Comment:</strong> {{ comments_map.get(reviewee_id, "—") }}
+    </li>
+  </ul>
   {% endfor %}
 
-  <a href="{{ url_for('class_summary', class_id=request.view_args['class_id']) }}" class="btn btn-secondary mt-4">
-    ← Back to Summary
-  </a>
+  <a href="{{ url_for('class_summary', class_id=class_id) }}" class="btn btn-secondary mt-3">← Back to Summary</a>
 </div>
 {% endblock %}

@@ -1,22 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Choose a Class{% endblock %}
+{% block title %}Select Class{% endblock %}
 {% block content %}
-<div class="container-centered">
-  <div class="card">
-    <h4 class="text-center mb-4">Select a Class to Enter</h4>
-    <form method="POST">
-      <div class="mb-3">
-        <label for="class_id" class="form-label">Class</label>
-        <select name="class_id" class="form-select" required>
-          {% for cls in classes %}
-          <option value="{{ cls.id }}">{{ cls.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="d-grid">
-        <button type="submit" class="btn btn-success">Enter Class</button>
-      </div>
-    </form>
+<div class="container mt-4">
+  <h3 class="text-center mb-4">Select a Class</h3>
+
+  <form method="POST" action="/select_class" class="row justify-content-center g-3">
+    <div class="col-md-6">
+      <select name="class_id" class="form-select" required>
+        <option disabled selected value="">Choose your class</option>
+        {% for cls in classes %}
+        <option value="{{ cls.id }}">{{ cls.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-primary">Enter</button>
+    </div>
+  </form>
+
+  <div class="text-center mt-4">
+    <a href="{{ url_for('join_additional_class') }}" class="btn btn-outline-info">Join Another Class</a>
   </div>
 </div>
 {% endblock %}

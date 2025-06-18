@@ -30,29 +30,25 @@
     {% endfor %}
   </div>
 
-  <!-- Assign Student to Team -->
-  <h4 class="mt-4">Assign Student to Team</h4>
-  <form action="{{ url_for('assign_student_ui') }}" method="POST" class="row g-2 align-items-center">
-    <input type="hidden" name="class_id" value="{{ cls.id }}">
-
+  <h5>Assign Student to Team</h5>
+  <form action="/assign_student_ui" method="POST" class="row g-2 mb-4">
     <div class="col-md-5">
-      <select name="student_email" class="form-select" required>
+      <select name="student_id" class="form-select" required>
+        <option disabled selected value="">Select Student</option>
         {% for student in students %}
-        <option value="{{ student.email }}">{{ student.first_name }} {{ student.last_name }} ({{ student.email }})
-        </option>
+        <option value="{{ student.id }}">{{ student.first_name }} {{ student.last_name }} - {{ student.email }}</option>
         {% endfor %}
       </select>
     </div>
-
-    <div class="col-md-4">
+    <div class="col-md-3">
       <select name="team_id" class="form-select" required>
+        <option disabled selected value="">Select Team</option>
         {% for team in teams %}
         <option value="{{ team.id }}">Team {{ team.id }}</option>
         {% endfor %}
       </select>
     </div>
-
-    <div class="col-md-3">
+    <div class="col-md-2">
       <button type="submit" class="btn btn-success">Assign</button>
     </div>
   </form>

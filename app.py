@@ -303,22 +303,36 @@ def class_summary(class_id):
 
     return render_template("class_summary.html", results_by_team=team_results, class_id=class_id)
 
-
 @app.route('/review_detail/<int:class_id>/<int:student_id>')
 def review_detail(class_id, student_id):
     user = User.query.get(session.get('user_id'))
     if not user or user.role != 'professor':
+        flash("Access denied.", "danger")
         return redirect('/login')
 
+    # Get reviewer
+    student = User.query.get_or_404(student_id)
+
+    # All answers that the student gave to others
     answers = ReviewAnswer.query.filter_by(class_id=class_id, reviewer_id=student_id).all()
+
+    # Reviewees and questions mapping
     reviewees = {a.reviewee_id: User.query.get(a.reviewee_id) for a in answers}
     questions = {q.id: q.question_text for q in ReviewQuestion.query.filter_by(class_id=class_id).all()}
+
+    # Get any comments submitted by the student for others
     comments = ReviewAssignment.query.filter_by(class_id=class_id, reviewer_id=student_id).all()
     comment_map = {c.reviewee_id: c.comment for c in comments}
-    reviewer = User.query.get(student_id)
 
-    return render_template("review_detail.html", reviewer=reviewer, answers=answers,
-                           questions=questions, reviewees=reviewees, comments_map=comment_map)
+    return render_template(
+        "review_detail.html",
+        student=student,
+        class_id=class_id,
+        answers=answers,
+        questions=questions,
+        reviewees=reviewees,
+        comments_map=comment_map
+    )
 
 @app.route('/approve_join/<int:request_id>', methods=['POST'])
 def approve_join(request_id):

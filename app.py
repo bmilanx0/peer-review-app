@@ -278,6 +278,21 @@ def submit_review_form():
     flash("Review submitted.", "success")
     return redirect('/dashboard')
 
+@app.route('/my_reviews')
+def my_reviews():
+    user = User.query.get(session.get('user_id'))
+    if not user or user.role != 'student':
+        return redirect('/login')
+
+    reviews = ReviewAnswer.query.filter_by(reviewer_id=user.id).all()
+    reviewees = {r.reviewee_id: User.query.get(r.reviewee_id) for r in reviews}
+    questions = {q.id: q.question_text for q in ReviewQuestion.query.all()}
+
+    comments = ReviewAssignment.query.filter_by(reviewer_id=user.id).all()
+    comment_map = {c.reviewee_id: c.comment for c in comments}
+
+    return render_template("my_reviews.html", answers=reviews, reviewees=reviewees, questions=questions, comments_map=comment_map)
+
 @app.route('/class_summary/<int:class_id>')
 def class_summary(class_id):
     user = User.query.get(session.get('user_id'))

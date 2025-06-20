@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="text-center">My Submitted Reviews</h3>
+  {% for reviewee_id, reviewee in reviewees.items() %}
+    <h5 class="mt-4">{{ reviewee.first_name }} {{ reviewee.last_name }}</h5>
+    <ul>
+      {% for a in answers if a.reviewee_id == reviewee_id %}
+        <li><strong>{{ questions[a.question_id] }}:</strong> {{ a.score }}</li>
+      {% endfor %}
+      <li><strong>Comment:</strong> {{ comments_map.get(reviewee_id, "—") }}</li>
+    </ul>
+  {% endfor %}
+  <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-3">← Back to Dashboard</a>
+</div>
+{% endblock %}
+
